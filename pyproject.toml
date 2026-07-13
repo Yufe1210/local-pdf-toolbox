@@ -1,0 +1,20 @@
+[project]
+name = "pdf-merger"
+version = "0.1.0"
+description = "A local Streamlit tool for merging PDF files in memory."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "pypdf>=6.0,<7",
+    "streamlit>=1.45,<2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]

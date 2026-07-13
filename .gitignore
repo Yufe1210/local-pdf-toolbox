@@ -4,4 +4,7 @@ __pycache__/
 *.py[cod]
 tmp/
 output/
-
+build/
+dist/
+release/
+*.log

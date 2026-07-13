@@ -5,6 +5,7 @@ description = "A local Streamlit tool for merging PDF files in memory."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "packaging>=26,<27",
     "pypdf>=6.0,<7",
     "streamlit>=1.45,<2",
 ]

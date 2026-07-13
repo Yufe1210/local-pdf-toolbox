@@ -15,6 +15,8 @@ flowchart LR
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
 
+發行版的更新來源由 `update-config.json` 提供。Repository 內的預設值保持空白，避免開發版連線到不存在或未受控的服務；正式建置必須注入實際 HTTPS 來源，並維持 `require_signed_updates: true`。
+
 建置產物 `build/`、`dist/`、`release/` 及安裝程式不得提交 Git；正式發布的安裝程式應放在受控的發布平台。
 
 ## 版本策略

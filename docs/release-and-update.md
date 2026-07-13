@@ -42,6 +42,18 @@ flowchart LR
 
 正式建置會使用 Windows 憑證存放區中的程式碼簽章憑證，簽署 onedir 內所有尚未具有有效簽章的 `.exe`、`.dll`、`.pyd` 及最終安裝程式，不需要另外安裝 `signtool.exe`。簽章完成後必須再次驗證整個應用程式目錄，且不可略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供受到 Windows 應用程式控制政策限制的未簽章開發環境檢查建置內容；以此方式產生的檔案不得發布。
 
+### 乾淨 Windows 驗收
+
+將正式簽章安裝程式與 repository 複製到沒有 Python、uv、Streamlit 或 pypdf 的 Windows 10／11 x64 測試環境後執行：
+
+```powershell
+.\scripts\verify-release.ps1 `
+  -InstallerPath ".\本機PDF工具箱-安裝程式.exe" `
+  -ExpectedVersion "0.1.0"
+```
+
+驗收腳本本身只使用 Windows PowerShell，會依序驗證安裝程式簽章、per-user 離線安裝、版本、桌面與開始功能表捷徑、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。腳本會拒絕覆蓋既有安裝；`-AllowUnsignedDevelopmentBuild` 僅供未啟用應用程式控制的隔離測試 VM 使用，不構成正式驗收。
+
 ## 版本策略
 
 - 使用 `MAJOR.MINOR.PATCH`。

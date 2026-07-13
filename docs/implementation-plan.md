@@ -19,6 +19,7 @@
 | 桌面啟動器 | 進行中 | 已完成單一執行個體、動態連接埠、瀏覽器開啟、結束控制與更新入口；待簽章版 GUI 驗收 |
 | PyInstaller onedir | 進行中 | spec 與一鍵建置已建立，封裝後服務曾通過 loopback 健康檢查；待簽章版重跑正式 smoke test |
 | Inno Setup 安裝程式 | 進行中 | 繁體中文 installer 與未簽章測試安裝包已成功編譯，採 per-user 離線安裝、捷徑及解除安裝；待簽章與乾淨環境驗收 |
+| 發布驗收腳本 | 已完成 | 僅使用 Windows PowerShell，自動驗證簽章、安裝、啟動、loopback、結束、背景程序與解除安裝 |
 | 無 Python 電腦驗證 | 尚未開始 | 需使用 Windows Sandbox 或乾淨 VM |
 | 更新機制 | 進行中 | 版本、HTTPS、下載、SHA-256 與 Authenticode 驗證已實作；待設定正式來源、憑證與 0.1.0 → 0.2.0 整合驗證 |
 | 拆分 PDF | 尚未開始 | 預計 0.2.0 |

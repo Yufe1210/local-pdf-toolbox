@@ -21,30 +21,62 @@ function Get-FreeLoopbackPort {
     }
 }
 
-function Find-SignTool {
-    $command = Get-Command signtool.exe -ErrorAction SilentlyContinue
-    if ($command) {
-        return $command.Source
+function Find-CodeSigningCertificate([string]$Thumbprint) {
+    $normalized = ($Thumbprint -replace "\s", "").ToUpperInvariant()
+    foreach ($store in @("Cert:\CurrentUser\My", "Cert:\LocalMachine\My")) {
+        $certificate = Get-ChildItem -LiteralPath $store -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.Thumbprint -eq $normalized -and
+                $_.HasPrivateKey -and
+                $_.NotBefore -le (Get-Date) -and
+                $_.NotAfter -gt (Get-Date) -and
+                $_.EnhancedKeyUsageList.ObjectId -contains "1.3.6.1.5.5.7.3.3"
+            } |
+            Select-Object -First 1
+        if ($certificate) {
+            return $certificate
+        }
     }
-    $kits = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\bin"
-    if (Test-Path $kits) {
-        return Get-ChildItem -LiteralPath $kits -Recurse -File -Filter signtool.exe |
-            Where-Object { $_.FullName -like "*\x64\signtool.exe" } |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1 -ExpandProperty FullName
-    }
-    return $null
+    throw "找不到可用且含私密金鑰的程式碼簽章憑證：$Thumbprint"
 }
 
-function Sign-Artifact([string]$Path, [string]$Thumbprint) {
-    $signTool = Find-SignTool
-    if (-not $signTool) {
-        throw "找不到 signtool.exe，無法建立正式簽章。"
+function Sign-Artifact(
+    [string]$Path,
+    [System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate
+) {
+    $signature = Set-AuthenticodeSignature `
+        -LiteralPath $Path `
+        -Certificate $Certificate `
+        -HashAlgorithm SHA256 `
+        -TimestampServer "http://timestamp.digicert.com"
+    if ($signature.Status -ne "Valid") {
+        throw "簽署或驗證失敗：$Path`n$($signature.StatusMessage)"
     }
-    & $signTool sign /sha1 $Thumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $Path
-    if ($LASTEXITCODE -ne 0) {
-        throw "簽署失敗：$Path"
+}
+
+function Sign-ApplicationBundle(
+    [string]$Directory,
+    [System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate
+) {
+    $artifacts = @(
+        Get-ChildItem -LiteralPath $Directory -Recurse -File |
+            Where-Object { $_.Extension -in ".exe", ".dll", ".pyd" }
+    )
+    $signedCount = 0
+    foreach ($artifact in $artifacts) {
+        $status = (Get-AuthenticodeSignature -LiteralPath $artifact.FullName).Status
+        if ($status -ne "Valid") {
+            Sign-Artifact $artifact.FullName $Certificate
+            $signedCount += 1
+        }
     }
+    $invalid = $artifacts | Where-Object {
+        (Get-AuthenticodeSignature -LiteralPath $_.FullName).Status -ne "Valid"
+    }
+    if ($invalid) {
+        throw "應用程式目錄仍含未通過簽章驗證的執行檔。"
+    }
+    Write-Host "已簽署 $signedCount 個執行檔，並驗證全部 $($artifacts.Count) 個 PE 檔案。"
 }
 
 if ($ReleaseBuild) {
@@ -62,6 +94,12 @@ if ($ReleaseBuild) {
 $version = (& uv run python -c "from pdf_toolbox import __version__; print(__version__)").Trim()
 if (-not $version) {
     throw "無法取得應用程式版本。"
+}
+$signingCertificate = if ($CertificateThumbprint) {
+    Find-CodeSigningCertificate $CertificateThumbprint
+}
+else {
+    $null
 }
 
 Write-Host "[1/6] 同步 uv 環境"
@@ -100,8 +138,8 @@ $appExe = Join-Path $distDir "本機PDF工具箱.exe"
 if (-not (Test-Path -LiteralPath $appExe)) {
     throw "找不到打包後執行檔：$appExe"
 }
-if ($CertificateThumbprint) {
-    Sign-Artifact $appExe $CertificateThumbprint
+if ($signingCertificate) {
+    Sign-ApplicationBundle $distDir $signingCertificate
 }
 
 if ($SkipPackagedSmokeTest) {
@@ -177,8 +215,8 @@ $installer = Join-Path $releaseDir "$outputBaseName.exe"
 if (-not (Test-Path -LiteralPath $installer)) {
     throw "找不到安裝程式：$installer"
 }
-if ($CertificateThumbprint) {
-    Sign-Artifact $installer $CertificateThumbprint
+if ($signingCertificate) {
+    Sign-Artifact $installer $signingCertificate
 }
 
 $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()

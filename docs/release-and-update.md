@@ -40,7 +40,7 @@ flowchart LR
   -CertificateThumbprint "憑證指紋"
 ```
 
-正式建置會簽署應用程式與安裝程式，且不可略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供受到 Windows 應用程式控制政策限制的未簽章開發環境檢查建置內容；以此方式產生的檔案不得發布。
+正式建置會使用 Windows 憑證存放區中的程式碼簽章憑證，簽署 onedir 內所有尚未具有有效簽章的 `.exe`、`.dll`、`.pyd` 及最終安裝程式，不需要另外安裝 `signtool.exe`。簽章完成後必須再次驗證整個應用程式目錄，且不可略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供受到 Windows 應用程式控制政策限制的未簽章開發環境檢查建置內容；以此方式產生的檔案不得發布。
 
 ## 版本策略
 

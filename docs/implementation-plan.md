@@ -55,6 +55,8 @@ uv run streamlit run app.py
 
 目前開發電腦的 Windows 應用程式控制政策會攔截新產生的未簽章執行檔。因此未簽章安裝包只用來檢查建置內容，不能取代正式簽章版與乾淨 Windows 環境的驗收。正式建置不得略過封裝後 smoke test。
 
+逐項驗收證據與未完成原因記錄於 [0.1.0 驗收紀錄](acceptance-results.md)。
+
 ## 目標架構
 
 ```mermaid

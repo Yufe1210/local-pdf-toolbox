@@ -5,7 +5,7 @@
 ## 文件索引
 
 - [產品需求](requirements.md)：目標使用者、功能、隱私、執行環境與支援範圍。
-- [實作計畫](implementation-plan.md)：目前狀態、架構、里程碑與驗收標準。
+- [實作計畫](implementation-plan.md)：目前狀態、下一步執行順序、分支、里程碑與驗收標準。
 - [發布與更新](release-and-update.md)：PyInstaller、Inno Setup、離線安裝、版本與更新流程。
 
 ## 維護原則

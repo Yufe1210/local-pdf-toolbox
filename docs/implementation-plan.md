@@ -25,6 +25,21 @@ uv sync
 uv run streamlit run app.py
 ```
 
+## 下一步執行順序
+
+目前優先目標是完成可交付的 `0.1.0`，在離線安裝與更新能力穩定之前，不先新增拆分 PDF。
+
+| 順序 | 分支 | 工作 | 完成條件 |
+| --- | --- | --- | --- |
+| 1 | `feature/toolbox-foundation` | 工具箱化、首頁與功能模組拆分 | 合併行為不變，既有測試全部通過 |
+| 2 | `feature/desktop-launcher` | 雙擊啟動、本機連接埠、瀏覽器與結束控制 | 不使用命令列即可啟動及完整結束 |
+| 3 | `build/windows-packaging` | PyInstaller onedir、Inno Setup 與一鍵建置 | 產生完整離線安裝程式 |
+| 4 | `feature/update-foundation` | 更新檢查、下載、驗證及覆蓋安裝 | 離線不受影響，測試版可完成升級 |
+| 5 | `release/0.1.0` | 乾淨 Windows 驗收與首次發布 | 無 Python 電腦可安裝、使用及解除安裝 |
+| 6 | `feature/split-pdf` | 拆分 PDF 與 0.2.0 更新驗證 | 0.1.0 可提示並更新至 0.2.0 |
+
+每個階段需使用小型 Conventional Commit，並在同一個 commit 同步更新本文件的狀態表及其他受影響的 `docs/` 文件。程式變更合併前至少執行 `uv run pytest`；打包變更另需執行打包後 smoke test。
+
 ## 目標架構
 
 ```mermaid
@@ -49,6 +64,7 @@ flowchart TD
 - 保留現有合併行為與測試。
 - 建立工具首頁、共用 PDF 驗證與獨立合併頁面。
 - 統一錯誤、輸出命名與功能導覽。
+- 建議提交順序：共用結構、合併頁面遷移、首頁與名稱、測試及文件。
 
 ### 2. 桌面啟動器
 
@@ -58,6 +74,7 @@ flowchart TD
 - 不顯示命令列視窗。
 - 提供開啟介面、查看版本及結束工具的控制方式。
 - 將啟動錯誤轉成一般使用者可理解的訊息。
+- 驗證關閉介面後不留下 Streamlit 或 Python 背景程序。
 
 ### 3. Windows 打包與安裝
 
@@ -65,12 +82,14 @@ flowchart TD
 - 使用 Inno Setup 將完整 onedir 壓入單一離線安裝程式。
 - 安裝到使用者範圍，建立捷徑與解除安裝資訊。
 - 建立可重複執行的 `scripts/build.ps1`。
+- 最終輸出為 `release/本機PDF工具箱-安裝程式.exe`，安裝時不得下載額外內容。
 
 ### 4. 更新基礎架構
 
 - 在首次提供給使用者的 0.1.0 中加入更新檢查能力。
 - 只下載完整、已驗證的新版本安裝程式，不先實作差分更新。
 - 更新失敗不得阻止工具啟動。
+- 固定 Inno Setup `AppId`，使用 HTTPS、SHA-256 與正式發布時的 Authenticode 簽章。
 
 ### 5. 拆分 PDF
 

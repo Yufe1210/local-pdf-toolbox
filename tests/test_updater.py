@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from pdf_toolbox.updater import UpdateError, check_for_update, download_installer
+from pdf_toolbox.updater import (
+    UpdateError,
+    check_for_update,
+    cleanup_downloaded_installers,
+    download_installer,
+)
 
 
 class UpdateHandler(BaseHTTPRequestHandler):
@@ -89,3 +94,43 @@ def test_rejects_corrupted_download(update_server: str, tmp_path: Path) -> None:
     with pytest.raises(UpdateError, match="驗證失敗"):
         download_installer(update, destination_dir=tmp_path)
     assert not list(tmp_path.iterdir())
+
+
+def test_rejects_insecure_redirect(monkeypatch) -> None:
+    class RedirectedResponse:
+        headers: dict[str, str] = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def geturl(self) -> str:
+            return "http://downloads.example.test/feed.json"
+
+        def read(self, size: int) -> bytes:
+            return b"{}"
+
+    monkeypatch.setattr(
+        "pdf_toolbox.updater.urllib.request.urlopen",
+        lambda request, timeout: RedirectedResponse(),
+    )
+
+    with pytest.raises(UpdateError, match="不安全位置"):
+        check_for_update("https://updates.example.test/feed.json")
+
+
+def test_cleanup_downloaded_installers_preserves_unrelated_files(tmp_path: Path) -> None:
+    installer = tmp_path / "LocalPDFToolbox-0.2.0-setup.exe"
+    partial = tmp_path / "LocalPDFToolbox-0.3.0-setup.part"
+    unrelated = tmp_path / "keep.txt"
+    installer.write_bytes(b"installer")
+    partial.write_bytes(b"partial")
+    unrelated.write_bytes(b"keep")
+
+    cleanup_downloaded_installers(tmp_path)
+
+    assert not installer.exists()
+    assert not partial.exists()
+    assert unrelated.read_bytes() == b"keep"

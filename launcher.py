@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 import urllib.request
 import webbrowser
 from datetime import date
@@ -31,6 +32,7 @@ from pdf_toolbox.updater import (
     UpdateError,
     UpdateInfo,
     check_for_update,
+    cleanup_downloaded_installers,
     download_installer,
     has_valid_authenticode_signature,
 )
@@ -77,25 +79,40 @@ def server_command(port: int) -> list[str]:
 def run_streamlit_server(port: int) -> int:
     """Run the blocking local Streamlit service in the launcher child process."""
 
-    from streamlit.web import bootstrap
+    log_path = user_data_dir() / "launcher.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    app_path = resource_path("app.py")
-    options = {
-        "server_address": LOOPBACK_HOST,
-        "server_port": port,
-        "server_headless": True,
-        "server_fileWatcherType": "none",
-        "server_runOnSave": False,
-        "browser_gatherUsageStats": False,
-    }
-    bootstrap.load_config_options(options)
-    bootstrap.run(
-        str(app_path),
-        False,
-        [],
-        options,
-    )
-    return 0
+    def log(message: str) -> None:
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {message}\n")
+
+    try:
+        from streamlit import config as streamlit_config
+        from streamlit.web import bootstrap
+
+        app_path = resource_path("app.py")
+        options = {
+            "global_developmentMode": False,
+            "server_address": LOOPBACK_HOST,
+            "server_port": port,
+            "server_headless": True,
+            "server_fileWatcherType": "none",
+            "server_runOnSave": False,
+            "browser_gatherUsageStats": False,
+        }
+        log(f"Starting server for {app_path} on {LOOPBACK_HOST}:{port}")
+        bootstrap.load_config_options(options)
+        log(
+            "Config loaded: "
+            f"address={streamlit_config.get_option('server.address')} "
+            f"port={streamlit_config.get_option('server.port')}"
+        )
+        bootstrap.run(str(app_path), False, [], options)
+        log("Server stopped normally")
+        return 0
+    except BaseException:
+        log(traceback.format_exc())
+        raise
 
 
 class LauncherWindow:
@@ -139,6 +156,7 @@ class LauncherWindow:
 
     def run(self) -> int:
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        cleanup_downloaded_installers()
         threading.Thread(target=self._start_server, daemon=True).start()
         self.root.mainloop()
         return 0

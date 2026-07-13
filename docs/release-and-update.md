@@ -15,9 +15,32 @@ flowchart LR
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
 
+安裝與解除安裝精靈使用專案內固定版本的 Inno Setup 官方繁體中文翻譯 `packaging/languages/ChineseTraditional.isl`，避免建置電腦是否額外安裝語言檔影響結果。更新翻譯時需以 Inno Setup 官方翻譯來源為準並重新編譯驗證。
+
 發行版的更新來源由 `update-config.json` 提供。Repository 內的預設值保持空白，避免開發版連線到不存在或未受控的服務；正式建置必須注入實際 HTTPS 來源，並維持 `require_signed_updates: true`。
 
 建置產物 `build/`、`dist/`、`release/` 及安裝程式不得提交 Git；正式發布的安裝程式應放在受控的發布平台。
+
+### Windows 建置指令
+
+開發用未簽章安裝包：
+
+```powershell
+.\scripts\build.ps1
+```
+
+腳本會依序執行 `uv sync`、`pytest`、PyInstaller、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
+
+正式建置必須同時提供 HTTPS 更新資訊網址及安裝在 Windows 憑證存放區內的程式碼簽章憑證指紋：
+
+```powershell
+.\scripts\build.ps1 `
+  -ReleaseBuild `
+  -UpdateFeedUrl "https://example.com/pdf-toolbox/update.json" `
+  -CertificateThumbprint "憑證指紋"
+```
+
+正式建置會簽署應用程式與安裝程式，且不可略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供受到 Windows 應用程式控制政策限制的未簽章開發環境檢查建置內容；以此方式產生的檔案不得發布。
 
 ## 版本策略
 
@@ -40,7 +63,7 @@ flowchart LR
 4. 使用者同意後下載新版完整安裝程式到暫存目錄。
 5. 驗證 Authenticode 簽章及檔案雜湊。
 6. 關閉目前程式，執行新版安裝程式覆蓋原安裝。
-7. 成功後清除下載檔並重新啟動。
+7. 安裝精靈完成後重新啟動；啟動器會在後續啟動時清除先前下載的完整安裝檔與未完成檔案。
 
 版本資訊至少包含：
 
@@ -56,7 +79,7 @@ flowchart LR
 }
 ```
 
-雜湊必須透過受保護的 HTTPS 來源提供；正式發布仍應以程式碼簽章作為主要信任依據。更新檢查無網路、逾時或伺服器錯誤時應靜默略過，不能阻止既有功能啟動。
+雜湊必須透過受保護的 HTTPS 來源提供；正式發布仍應以程式碼簽章作為主要信任依據。更新檢查無網路、逾時或伺服器錯誤時應靜默略過，不能阻止既有功能啟動。更新來源與下載位置若重新導向到非 HTTPS 的外部網址，必須拒絕更新；僅測試用 loopback 網址例外。
 
 ## 發布檢查清單
 

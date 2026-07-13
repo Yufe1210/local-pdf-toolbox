@@ -54,6 +54,15 @@ def _read_limited(response: object, limit: int) -> bytes:
     return data
 
 
+def _validate_final_url(response: object, requested_url: str, message: str) -> None:
+    """Reject redirects that leave the allowed HTTPS or loopback transports."""
+
+    get_url = getattr(response, "geturl", None)
+    final_url = str(get_url()) if callable(get_url) else requested_url
+    if not _is_secure_url(final_url):
+        raise UpdateError(message)
+
+
 def check_for_update(
     feed_url: str,
     *,
@@ -76,6 +85,7 @@ def check_for_update(
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
+            _validate_final_url(response, feed_url, "更新來源重新導向到不安全位置。")
             payload = json.loads(_read_limited(response, MAX_FEED_BYTES).decode("utf-8"))
     except UpdateError:
         raise
@@ -142,6 +152,11 @@ def download_installer(
     downloaded = 0
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
+            _validate_final_url(
+                response,
+                update.download_url,
+                "新版下載位置重新導向到不安全位置。",
+            )
             header = response.headers.get("Content-Length")
             total = int(header) if header else None
             if total is not None and total > MAX_INSTALLER_BYTES:
@@ -164,6 +179,24 @@ def download_installer(
     except Exception as exc:
         partial_path.unlink(missing_ok=True)
         raise UpdateError("下載新版安裝程式失敗。") from exc
+
+
+def cleanup_downloaded_installers(destination_dir: Path | None = None) -> None:
+    """Best-effort cleanup of installers and partial downloads from earlier runs."""
+
+    target_dir = destination_dir or Path(tempfile.gettempdir()) / APP_ID
+    if not target_dir.is_dir():
+        return
+    for pattern in (f"{APP_ID}-*-setup.exe", f"{APP_ID}-*-setup.part"):
+        for path in target_dir.glob(pattern):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+    try:
+        target_dir.rmdir()
+    except OSError:
+        pass
 
 
 def has_valid_authenticode_signature(path: Path) -> bool:

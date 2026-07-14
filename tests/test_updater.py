@@ -20,6 +20,20 @@ class UpdateHandler(BaseHTTPRequestHandler):
     corrupt_hash = False
 
     def do_GET(self) -> None:  # noqa: N802
+        if self.path == "/manual-feed.json":
+            payload = json.dumps(
+                {
+                    "version": self.version,
+                    "release_url": "https://github.com/example/pdf-toolbox/releases/latest",
+                    "release_notes": ["新增拆分 PDF"],
+                }
+            ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         if self.path == "/feed.json":
             digest = hashlib.sha256(self.installer).hexdigest()
             if self.corrupt_hash:
@@ -27,6 +41,7 @@ class UpdateHandler(BaseHTTPRequestHandler):
             payload = json.dumps(
                 {
                     "version": self.version,
+                    "release_url": "https://github.com/example/pdf-toolbox/releases/latest",
                     "download_url": f"http://127.0.0.1:{self.server.server_port}/setup.exe",
                     "sha256": digest,
                     "release_notes": ["新增拆分 PDF"],
@@ -70,6 +85,7 @@ def test_check_and_download_update(update_server: str, tmp_path: Path) -> None:
 
     assert update is not None
     assert update.version == "0.2.0"
+    assert update.release_url.endswith("/releases/latest")
     assert update.release_notes == ("新增拆分 PDF",)
     installer = download_installer(update, destination_dir=tmp_path)
     assert installer.read_bytes() == UpdateHandler.installer
@@ -79,6 +95,15 @@ def test_current_version_does_not_offer_update(update_server: str) -> None:
     UpdateHandler.version = "0.1.0"
 
     assert check_for_update(f"{update_server}/feed.json", current_version="0.1.0") is None
+
+
+def test_manual_feed_does_not_require_installer_metadata(update_server: str) -> None:
+    update = check_for_update(f"{update_server}/manual-feed.json", current_version="0.1.0")
+
+    assert update is not None
+    assert update.download_url is None
+    assert update.sha256 is None
+    assert update.release_url.endswith("/releases/latest")
 
 
 def test_rejects_insecure_remote_feed() -> None:

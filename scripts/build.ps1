@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$UpdateFeedUrl = "",
+    [string]$UpdateFeedUrl = "https://raw.githubusercontent.com/Yufe1210/local-pdf-toolbox/main/updates/update.json",
     [string]$CertificateThumbprint = "",
     [switch]$ReleaseBuild,
     [switch]$SkipPackagedSmokeTest,
@@ -80,14 +80,14 @@ function Sign-ApplicationBundle(
 }
 
 if ($ReleaseBuild) {
-    if ($SkipPackagedSmokeTest) {
-        throw "正式建置不得略過打包後 smoke test。"
-    }
     if (-not $UpdateFeedUrl.StartsWith("https://")) {
         throw "正式建置必須提供 HTTPS UpdateFeedUrl。"
     }
+    if ($CertificateThumbprint -and $SkipPackagedSmokeTest) {
+        throw "簽章正式建置不得略過打包後 smoke test。"
+    }
     if (-not $CertificateThumbprint) {
-        throw "正式建置必須提供 CertificateThumbprint。"
+        Write-Warning "正在建立未簽章公開測試版；Windows 可能警告或封鎖，發布前必須在乾淨 Windows 驗收。"
     }
 }
 
@@ -118,7 +118,6 @@ New-Item -ItemType Directory -Force $generatedDir | Out-Null
 $generatedConfig = Join-Path $generatedDir "update-config.json"
 $configJson = @{
     update_feed_url = $UpdateFeedUrl
-    require_signed_updates = $true
 } | ConvertTo-Json
 [System.IO.File]::WriteAllText(
     $generatedConfig,
@@ -143,7 +142,7 @@ if ($signingCertificate) {
 }
 
 if ($SkipPackagedSmokeTest) {
-    Write-Warning "[5/6] 已略過打包後 smoke test；此產物不得作為正式發布版。"
+    Write-Warning "[5/6] 已略過打包後 smoke test；必須在其他乾淨 Windows 完整驗收後才能發布。"
 }
 else {
     Write-Host "[5/6] 驗證打包後本機服務"

@@ -17,7 +17,7 @@ flowchart LR
 
 安裝與解除安裝精靈使用專案內固定版本的 Inno Setup 官方繁體中文翻譯 `packaging/languages/ChineseTraditional.isl`，避免建置電腦是否額外安裝語言檔影響結果。更新翻譯時需以 Inno Setup 官方翻譯來源為準並重新編譯驗證。
 
-發行版的更新來源由 `update-config.json` 提供。Repository 內的預設值保持空白，避免開發版連線到不存在或未受控的服務；正式建置必須注入實際 HTTPS 來源，並維持 `require_signed_updates: true`。
+發行版的更新來源由 `update-config.json` 提供，目前指向公開 repository 內 `updates/update.json` 的 HTTPS raw URL。啟動器只讀取版本、發布說明及 GitHub Release 頁面，不自動下載或執行安裝程式。
 
 建置產物 `build/`、`dist/`、`release/` 及安裝程式不得提交 Git；正式發布的安裝程式應放在受控的發布平台。
 
@@ -31,28 +31,30 @@ flowchart LR
 
 腳本會依序執行 `uv sync`、`pytest`、PyInstaller、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
 
-正式建置必須同時提供 HTTPS 更新資訊網址及安裝在 Windows 憑證存放區內的程式碼簽章憑證指紋：
+`0.1.0` 未簽章公開測試版建置：
 
 ```powershell
 .\scripts\build.ps1 `
   -ReleaseBuild `
-  -UpdateFeedUrl "https://example.com/pdf-toolbox/update.json" `
-  -CertificateThumbprint "憑證指紋"
+  -SkipPackagedSmokeTest
 ```
 
-正式建置會使用 Windows 憑證存放區中的程式碼簽章憑證，簽署 onedir 內所有尚未具有有效簽章的 `.exe`、`.dll`、`.pyd` 及最終安裝程式，不需要另外安裝 `signtool.exe`。簽章完成後必須再次驗證整個應用程式目錄，且不可略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供受到 Windows 應用程式控制政策限制的未簽章開發環境檢查建置內容；以此方式產生的檔案不得發布。
+目前開發電腦的 Smart App Control 會阻擋未簽章 onedir，因此本機建置可略過封裝後 smoke test，但產物必須移至未啟用相同封鎖政策、且沒有 Python 的乾淨 Windows 電腦完成安裝驗收後才能發布。使用者下載頁面與 Release 說明必須標示「未簽章測試版」，並說明 Windows 可能警告或直接封鎖。
+
+未來取得憑證後，可額外提供 `-CertificateThumbprint "憑證指紋"`。建置腳本會簽署 onedir 內尚未具有有效簽章的 `.exe`、`.dll`、`.pyd` 及最終安裝程式；簽章正式建置不得略過封裝後 smoke test。
 
 ### 乾淨 Windows 驗收
 
-將正式簽章安裝程式與 repository 複製到沒有 Python、uv、Streamlit 或 pypdf 的 Windows 10／11 x64 測試環境後執行：
+將未簽章安裝程式與 repository 複製到沒有 Python、uv、Streamlit 或 pypdf 的 Windows 10／11 x64 測試環境後執行：
 
 ```powershell
 .\scripts\verify-release.ps1 `
   -InstallerPath ".\本機PDF工具箱-安裝程式.exe" `
-  -ExpectedVersion "0.1.0"
+  -ExpectedVersion "0.1.0" `
+  -AllowUnsignedDevelopmentBuild
 ```
 
-驗收腳本本身只使用 Windows PowerShell，會依序驗證安裝程式簽章、per-user 離線安裝、版本、桌面與開始功能表捷徑、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。腳本會拒絕覆蓋既有安裝；`-AllowUnsignedDevelopmentBuild` 僅供未啟用應用程式控制的隔離測試 VM 使用，不構成正式驗收。
+驗收腳本本身只使用 Windows PowerShell，會依序驗證 per-user 離線安裝、版本、桌面與開始功能表捷徑、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
 ## 版本策略
 
@@ -71,19 +73,16 @@ flowchart LR
 
 1. 啟動器每日最多檢查一次 HTTPS 版本資訊。
 2. 比較目前版本與最新版本。
-3. 顯示版本、更新說明、稍後提醒與立即更新。
-4. 使用者同意後下載新版完整安裝程式到暫存目錄。
-5. 驗證 Authenticode 簽章及檔案雜湊。
-6. 關閉目前程式，執行新版安裝程式覆蓋原安裝。
-7. 安裝精靈完成後重新啟動；啟動器會在後續啟動時清除先前下載的完整安裝檔與未完成檔案。
+3. 顯示版本、更新說明與「前往 GitHub 下載頁面」。
+4. 使用者同意後以預設瀏覽器開啟 GitHub Releases；程式本身不下載或執行安裝程式。
+5. 使用者自行下載完整新版安裝程式、關閉舊版並執行覆蓋安裝。
 
 版本資訊至少包含：
 
 ```json
 {
   "version": "0.2.0",
-  "download_url": "https://example.com/releases/pdf-toolbox-0.2.0.exe",
-  "sha256": "...",
+  "release_url": "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
   "release_notes": [
     "新增拆分 PDF",
     "改善大型 PDF 處理"
@@ -91,7 +90,15 @@ flowchart LR
 }
 ```
 
-雜湊必須透過受保護的 HTTPS 來源提供；正式發布仍應以程式碼簽章作為主要信任依據。更新檢查無網路、逾時或伺服器錯誤時應靜默略過，不能阻止既有功能啟動。更新來源與下載位置若重新導向到非 HTTPS 的外部網址，必須拒絕更新；僅測試用 loopback 網址例外。
+更新檢查無網路、逾時或 GitHub 無法存取時應靜默略過，不能阻止既有功能啟動。更新資訊及 Release 頁面必須使用 HTTPS；僅測試用 loopback 網址例外。由於 0.1.0 沒有程式碼簽章，GitHub Release 說明應附上安裝程式 SHA-256 供進階使用者核對，但 SHA-256 不能取代公開信任的程式碼簽章。
+
+## GitHub 配置
+
+- 公開 repository：`Yufe1210/local-pdf-toolbox`。
+- `main`：原始碼、`uv.lock`、文件、測試與建置腳本。
+- `updates/update.json`：啟動器讀取的版本資訊；發布新版安裝程式後才更新。
+- Git tags：`v0.1.0`、`v0.2.0` 等對應原始碼版本。
+- GitHub Releases：保存每個版本的完整 `本機PDF工具箱-安裝程式.exe` 與 SHA-256，不將二進位檔提交到 Git 歷史。
 
 ## 發布檢查清單
 
@@ -100,8 +107,8 @@ flowchart LR
 - 執行全部測試與 PDF 渲染檢查。
 - 建立乾淨的 PyInstaller onedir。
 - 測試打包後啟動、PDF 操作與完整結束。
-- 建立並簽署 Inno Setup 安裝程式。
+- 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。
 - 產生並驗證 SHA-256。
-- 上傳安裝程式，再更新版本資訊；不得先發布指向不存在安裝程式的版本資訊。
-- 從上一個正式版本測試完整更新流程。
+- 上傳安裝程式並確認 Release 頁面可存取，再更新 `updates/update.json`；不得先發布指向不存在版本的更新資訊。
+- 從上一個版本測試更新提示、開啟 GitHub Releases 及手動覆蓋安裝流程。

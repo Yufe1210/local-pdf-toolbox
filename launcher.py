@@ -32,9 +32,6 @@ from pdf_toolbox.updater import (
     UpdateError,
     UpdateInfo,
     check_for_update,
-    cleanup_downloaded_installers,
-    download_installer,
-    has_valid_authenticode_signature,
 )
 
 CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -156,7 +153,6 @@ class LauncherWindow:
 
     def run(self) -> int:
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        cleanup_downloaded_installers()
         threading.Thread(target=self._start_server, daemon=True).start()
         self.root.mainloop()
         return 0
@@ -256,40 +252,15 @@ class LauncherWindow:
         message = f"發現新版本 {update.version}。"
         if notes:
             message += f"\n\n{notes}"
-        message += "\n\n是否立即下載並安裝？"
+        message += "\n\n此版本不會自動安裝更新。是否前往 GitHub 下載頁面？"
         if messagebox.askyesno(f"{APP_NAME} 更新", message):
-            self._download_update(update)
+            webbrowser.open(update.release_url, new=2)
 
     def _update_check_failed(self, detail: str, show_error: bool) -> None:
         self.update_button.config(state="normal")
         self.status.config(text="工具已準備完成，可在瀏覽器中使用。")
         if show_error:
             messagebox.showwarning(APP_NAME, detail)
-
-    def _download_update(self, update: UpdateInfo) -> None:
-        self.update_button.config(state="disabled")
-        self.status.config(text=f"正在下載版本 {update.version}...")
-
-        def worker() -> None:
-            try:
-                installer = download_installer(update)
-                if self.config.require_signed_updates and not has_valid_authenticode_signature(installer):
-                    installer.unlink(missing_ok=True)
-                    raise UpdateError("新版安裝程式沒有可信任的數位簽章，已取消更新。")
-                self.root.after(0, lambda: self._install_update(installer))
-            except UpdateError as exc:
-                detail = str(exc)
-                self.root.after(0, lambda: self._update_check_failed(detail, True))
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _install_update(self, installer: Path) -> None:
-        self._stop_server()
-        subprocess.Popen(
-            [str(installer), "/SP-", "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"],
-            close_fds=True,
-        )
-        self.shutdown()
 
     def _stop_server(self) -> None:
         if self.process and self.process.poll() is None:

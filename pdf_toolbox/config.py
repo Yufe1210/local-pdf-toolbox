@@ -21,7 +21,6 @@ class LauncherConfig:
     """Publisher-controlled launcher settings bundled with a release."""
 
     update_feed_url: str = ""
-    require_signed_updates: bool = True
 
 
 def resource_path(name: str) -> Path:
@@ -48,7 +47,6 @@ def load_launcher_config() -> LauncherConfig:
         data = json.loads(path.read_text(encoding="utf-8"))
         return LauncherConfig(
             update_feed_url=str(data.get("update_feed_url", "")).strip(),
-            require_signed_updates=bool(data.get("require_signed_updates", True)),
         )
     except (OSError, ValueError, TypeError):
         return LauncherConfig()

@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import launcher
 from pdf_toolbox.config import LOOPBACK_HOST, LauncherConfig, load_launcher_config
+from pdf_toolbox.updater import UpdateInfo
 
 
 def test_find_available_port_is_loopback_bindable() -> None:
@@ -112,7 +113,6 @@ def test_launcher_config_reads_release_settings(monkeypatch, tmp_path: Path) -> 
         json.dumps(
             {
                 "update_feed_url": "https://updates.example.test/feed.json",
-                "require_signed_updates": False,
             }
         ),
         encoding="utf-8",
@@ -121,5 +121,35 @@ def test_launcher_config_reads_release_settings(monkeypatch, tmp_path: Path) -> 
 
     assert load_launcher_config() == LauncherConfig(
         update_feed_url="https://updates.example.test/feed.json",
-        require_signed_updates=False,
     )
+
+
+def test_new_version_opens_github_release_page(monkeypatch) -> None:
+    configured: list[dict[str, str]] = []
+    opened: list[tuple[str, int]] = []
+    prompts: list[str] = []
+    control = SimpleNamespace(config=lambda **values: configured.append(values))
+    window = object.__new__(launcher.LauncherWindow)
+    window.update_button = control
+    window.status = control
+    update = UpdateInfo(
+        version="0.2.0",
+        release_url="https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
+        release_notes=("新增拆分 PDF",),
+    )
+
+    def confirm(title: str, message: str) -> bool:
+        prompts.append(f"{title}\n{message}")
+        return True
+
+    monkeypatch.setattr(launcher.messagebox, "askyesno", confirm)
+    monkeypatch.setattr(
+        launcher.webbrowser,
+        "open",
+        lambda url, new=0: opened.append((url, new)),
+    )
+
+    window._update_check_finished(update, show_no_update=False)
+
+    assert "不會自動安裝更新" in prompts[0]
+    assert opened == [(update.release_url, 2)]

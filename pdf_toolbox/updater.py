@@ -32,9 +32,10 @@ class UpdateInfo:
     """Validated information for one newer release."""
 
     version: str
-    download_url: str
-    sha256: str
+    release_url: str
     release_notes: tuple[str, ...]
+    download_url: str | None = None
+    sha256: str | None = None
 
 
 def _is_secure_url(url: str) -> bool:
@@ -96,8 +97,9 @@ def check_for_update(
         version_text = str(payload["version"])
         remote_version = Version(version_text)
         installed_version = Version(current_version)
-        download_url = str(payload["download_url"])
-        sha256 = str(payload["sha256"]).lower()
+        release_url = str(payload["release_url"])
+        download_url = str(payload.get("download_url", "")).strip()
+        sha256 = str(payload.get("sha256", "")).lower().strip()
         notes_value = payload.get("release_notes", [])
         if not isinstance(notes_value, list):
             raise TypeError
@@ -107,16 +109,21 @@ def check_for_update(
 
     if remote_version <= installed_version:
         return None
-    if not _is_secure_url(download_url):
+    if not _is_secure_url(release_url):
+        raise UpdateError("GitHub 下載頁面必須使用 HTTPS。")
+    if bool(download_url) != bool(sha256):
+        raise UpdateError("更新資訊的自動下載欄位不完整。")
+    if download_url and not _is_secure_url(download_url):
         raise UpdateError("新版下載位置必須使用 HTTPS。")
-    if not SHA256_PATTERN.fullmatch(sha256):
+    if sha256 and not SHA256_PATTERN.fullmatch(sha256):
         raise UpdateError("更新資訊缺少有效的 SHA-256。")
 
     return UpdateInfo(
         version=version_text,
-        download_url=download_url,
-        sha256=sha256,
+        release_url=release_url,
         release_notes=notes,
+        download_url=download_url or None,
+        sha256=sha256 or None,
     )
 
 
@@ -138,6 +145,9 @@ def download_installer(
     progress: Callable[[int, int | None], None] | None = None,
 ) -> Path:
     """Download and hash-check a complete installer using an atomic rename."""
+
+    if not update.download_url or not update.sha256:
+        raise UpdateError("更新資訊未提供自動下載資料。")
 
     target_dir = destination_dir or Path(tempfile.gettempdir()) / APP_ID
     target_dir.mkdir(parents=True, exist_ok=True)

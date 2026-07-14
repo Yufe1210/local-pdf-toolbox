@@ -33,10 +33,28 @@ def test_installer_is_single_file_offline_and_keeps_fixed_app_id() -> None:
     assert "filesandordirs" in normalized
 
 
-def test_default_build_stays_offline_and_requires_signed_updates() -> None:
+def test_release_uses_github_manual_update_feed() -> None:
     config = json.loads((ROOT / "update-config.json").read_text(encoding="utf-8"))
+    feed = json.loads((ROOT / "updates" / "update.json").read_text(encoding="utf-8"))
     spec = (ROOT / "packaging" / "pdf_toolbox.spec").read_text(encoding="utf-8")
 
-    assert config == {"update_feed_url": "", "require_signed_updates": True}
+    assert config == {
+        "update_feed_url": (
+            "https://raw.githubusercontent.com/Yufe1210/"
+            "local-pdf-toolbox/main/updates/update.json"
+        )
+    }
+    assert feed["version"] == __version__
+    assert feed["release_url"] == (
+        "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest"
+    )
+    assert "download_url" not in feed
     assert 'os.environ.get("PDF_TOOLBOX_CONSOLE", "0") == "1"' in spec
     assert "COLLECT(" in spec
+
+
+def test_unsigned_release_build_is_explicitly_supported() -> None:
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8-sig")
+
+    assert "正在建立未簽章公開測試版" in build_script
+    assert "正式建置必須提供 CertificateThumbprint" not in build_script

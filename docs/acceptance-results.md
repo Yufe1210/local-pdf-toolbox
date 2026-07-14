@@ -17,6 +17,7 @@
 | 只監聽 loopback | 通過 | 原始碼服務實測與啟動器設定測試均為 `127.0.0.1` |
 | 啟動器結束子程序 | 通過 | 正常關閉、runtime 清理及子程序終止測試 |
 | 更新提示安全 | 通過 | HTTPS、重新導向、手動 feed、GitHub Release 開啟及舊有下載驗證元件測試 |
+| 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
 | PyInstaller onedir | 通過 | Python 3.13、Streamlit、pypdf 與應用資源成功封裝 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
 | 版本與發布設定一致性 | 通過 | 33 項測試全數通過 |

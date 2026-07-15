@@ -54,10 +54,15 @@ flowchart LR
 .\scripts\verify-release.ps1 `
   -InstallerPath ".\本機PDF工具箱-安裝程式.exe" `
   -ExpectedVersion "0.1.0" `
-  -AllowUnsignedDevelopmentBuild
+  -AllowUnsignedDevelopmentBuild `
+  -InteractiveGuiCheck
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳元件後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳元件後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。
+
+加入 `-InteractiveGuiCheck` 後，腳本會在服務驗證完成後暫停，列出首頁、預覽、中文與重複檔名、滑鼠拖曳、按鈕排序、合併下載、更新入口等檢查項目，只有輸入大寫 `PASS` 才會繼續。腳本正常關閉服務後會再次暫停，要求確認原瀏覽器分頁已顯示工具關閉狀態，之後才解除安裝。省略此參數時仍可執行無人值守的安裝生命週期檢查。
+
+`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
 ## 版本策略
 

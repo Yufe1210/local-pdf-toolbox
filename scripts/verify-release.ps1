@@ -2,7 +2,8 @@
     [Parameter(Mandatory = $true)]
     [string]$InstallerPath,
     [string]$ExpectedVersion = "0.1.0",
-    [switch]$AllowUnsignedDevelopmentBuild
+    [switch]$AllowUnsignedDevelopmentBuild,
+    [switch]$InteractiveGuiCheck
 )
 
 $ErrorActionPreference = "Stop"
@@ -135,8 +136,8 @@ try {
         throw "自我檢查不應啟動本機服務。"
     }
 
-    Write-Host "[5/8] 以安裝後捷徑等效方式啟動"
-    $LauncherProcess = Start-Process -FilePath $AppExe -PassThru -WindowStyle Hidden
+    Write-Host "[5/8] 由安裝後桌面捷徑啟動"
+    $LauncherProcess = Start-Process -FilePath $DesktopShortcut -PassThru
     Wait-Until { Test-Path -LiteralPath $RuntimePath } 30 "啟動器未建立執行狀態。"
     $runtime = Get-Content -Raw -Encoding UTF8 -LiteralPath $RuntimePath | ConvertFrom-Json
     if (-not ([string]$runtime.url).StartsWith("http://127.0.0.1:")) {
@@ -159,9 +160,34 @@ try {
         throw "本機服務監聽範圍不符合要求。"
     }
 
+    if ($InteractiveGuiCheck) {
+        Write-Host ""
+        Write-Host "請在啟動器與自動開啟的瀏覽器完成下列人工 GUI 驗收：" -ForegroundColor Cyan
+        Write-Host "  1. 啟動器視窗可見，瀏覽器自動開啟首頁，且沒有命令列視窗。"
+        Write-Host "  2. 進入合併 PDF，加入至少兩份 PDF；上傳元件加入後清空，卡片清單保持正確。"
+        Write-Host "  3. 中文及重複檔名、頁數與第一頁縮圖均正確，直向／橫向／旋轉方向正常。"
+        Write-Host "  4. 滑鼠拖曳、上移、下移、移除與清除全部均會同步更新同一份清單。"
+        Write-Host "  5. 依畫面順序合併，下載檔名、總頁數、頁面尺寸、方向及內容正確。"
+        Write-Host "  6. 啟動器的重新開啟介面與檢查更新操作正常；離線時 PDF 功能不受影響。"
+        Write-Host "請先不要自行關閉啟動器；腳本下一步會正常關閉它。"
+        $guiResult = (Read-Host "全部通過後輸入 PASS；輸入其他內容會中止驗收").Trim()
+        if ($guiResult -cne "PASS") {
+            throw "人工 GUI 驗收未確認通過。"
+        }
+    }
+
     Write-Host "[7/8] 正常關閉並檢查背景程序"
     Stop-VerifiedLauncher
     Wait-Until { -not (Test-Path -LiteralPath $RuntimePath) } 5 "關閉後未清除 runtime.json。"
+
+    if ($InteractiveGuiCheck) {
+        Write-Host ""
+        Write-Host "請回到原本的瀏覽器分頁，確認它顯示「本機 PDF 工具箱已關閉」，且啟動器視窗已消失。" -ForegroundColor Cyan
+        $shutdownResult = (Read-Host "確認通過後輸入 PASS；輸入其他內容會中止驗收").Trim()
+        if ($shutdownResult -cne "PASS") {
+            throw "關閉頁面人工驗收未確認通過。"
+        }
+    }
 
     Write-Host "[8/8] 解除安裝並檢查清理結果"
     $uninstaller = Join-Path $InstallDir "unins000.exe"

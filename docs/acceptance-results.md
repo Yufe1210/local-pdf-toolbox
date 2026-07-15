@@ -57,14 +57,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 2026-07-15 含第一頁預覽、拖曳、瀏覽器關閉狀態與強化版 `--self-test` 的最新未簽章候選檔已完成完整編譯，但不得在乾淨 Windows 驗收前上傳 Release：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
-- 大小：65,771,850 bytes（約 62.72 MiB）
+- 大小：65,766,246 bytes（約 62.72 MiB）
 - onedir 大小：219,748,540 bytes（約 209.57 MiB；3,336 個檔案）
 - 版本：0.1.0
-- SHA-256：`7f71f8e92fff6f94e2aa59b9b1fcbfe4c34f1a71b8459141a8896c6510bb284d`
+- SHA-256：`64380d35597d6a901ecc89203383cc526a7fa4bc94d3f532501190e349286f4f`
 - 簽章狀態：`NotSigned`
 - 封裝核對：14 個自家模組、`pdfium.dll`、pypdfium2／PDFium 完整 BUILD_LICENSES 與 streamlit-dnd 授權檔
 - 視覺核對：代表性直向紅色頁、橫向藍色頁及第一頁縮圖均清楚，順序、方向與頁面交界正常
-- 本機執行證據：本次 `-ReleaseBuild` 未略過任何步驟；強化版 `--self-test` 實際執行封裝內首頁、合併頁、兩張卡片與拖曳元件後端，封裝後 loopback smoke test 亦通過且只監聽 `127.0.0.1`
+- 本機執行證據：加入實際桌面捷徑與互動 GUI 驗收流程後，再次執行 `-ReleaseBuild` 且未略過任何步驟；強化版 `--self-test` 實際執行封裝內首頁、合併頁、兩張卡片與拖曳元件後端，封裝後 loopback smoke test 亦通過且只監聽 `127.0.0.1`
 - 限制：尚未在無 Python 的乾淨 Windows 安裝、實際操作 GUI 並解除安裝，不得上傳 GitHub Release
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
@@ -77,7 +77,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
 | 最新候選檔封裝後 smoke test | 本機通過、乾淨環境待處理 | 最新完整建置未使用略過參數；最終 onedir 的強化版 `--self-test`、健康檢查與 loopback 監聽通過，仍需在無 Python 電腦重跑安裝版驗收 |
 | 無 Python 電腦離線安裝 | 待處理 | 目前主機未安裝 Windows Sandbox，也沒有可用的既存 Windows VM |
-| 捷徑雙擊、GUI、拖曳、關閉頁面及無背景程序 | 待處理 | 本機已存在既有安裝，驗收腳本為避免覆蓋而會中止；需在乾淨 Windows 以允許旗標執行 `scripts/verify-release.ps1` 並完成人工 GUI 檢查 |
+| 捷徑雙擊、GUI、拖曳、關閉頁面及無背景程序 | 待處理 | 本機已存在既有安裝，驗收腳本為避免覆蓋而會中止；需在乾淨 Windows 執行 `scripts/verify-release.ps1 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck`，腳本會由實際桌面捷徑啟動，並在 GUI 操作與關閉頁面兩處等待人工輸入 `PASS` |
 | 解除安裝與資料清理 | 待處理 | 需在同一乾淨 Windows 環境完成驗收腳本 |
 | Windows 10／11 x64 相容性 | 待處理 | 至少各使用一個目標版本驗收 |
 | 0.1.0 更新至後續版本 | 待處理 | 待下一個版本驗證提示、GitHub 下載與手動覆蓋安裝 |

@@ -105,3 +105,7 @@ def test_release_verifier_checks_no_auto_start_and_installed_self_test() -> None
     assert "驗證安裝完成後未自動啟動" in verifier
     assert 'ArgumentList "--self-test"' in verifier
     assert "自我檢查不應啟動本機服務" in verifier
+    assert '[switch]$InteractiveGuiCheck' in verifier
+    assert "Start-Process -FilePath $DesktopShortcut" in verifier
+    assert 'Read-Host "全部通過後輸入 PASS' in verifier
+    assert 'Read-Host "確認通過後輸入 PASS' in verifier

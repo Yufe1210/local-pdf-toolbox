@@ -38,6 +38,25 @@ CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 ERROR_ALREADY_EXISTS = 183
 
 
+def run_installed_self_test() -> int:
+    """Run packaged dependency checks without starting the desktop interface."""
+
+    log_path = user_data_dir() / "self-test.log"
+    try:
+        from pdf_toolbox.self_test import run_self_test
+
+        checks = run_self_test()
+        message = "SELF-TEST OK: " + ", ".join(checks)
+        exit_code = 0
+    except BaseException:
+        message = "SELF-TEST FAILED\n" + traceback.format_exc()
+        exit_code = 1
+
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(message + "\n", encoding="utf-8")
+    return exit_code
+
+
 class SingleInstance:
     """A per-user Windows mutex that prevents duplicate servers."""
 
@@ -296,7 +315,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--run-server", action="store_true")
     parser.add_argument("--port", type=int)
+    parser.add_argument("--self-test", action="store_true")
     args, _ = parser.parse_known_args(argv)
+
+    if args.self_test:
+        return run_installed_self_test()
 
     if args.run_server:
         if not args.port:

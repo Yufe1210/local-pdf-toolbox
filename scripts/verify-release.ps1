@@ -65,7 +65,7 @@ if (-not $AllowUnsignedDevelopmentBuild -and $signature.Status -ne "Valid") {
 }
 
 try {
-    Write-Host "[1/6] 安裝 $AppName"
+    Write-Host "[1/8] 安裝 $AppName"
     $setup = Start-Process -FilePath $installer -ArgumentList @(
         "/VERYSILENT",
         "/SUPPRESSMSGBOXES",
@@ -77,7 +77,22 @@ try {
     }
     $InstalledByScript = $true
 
-    Write-Host "[2/6] 驗證完整離線安裝內容與版本"
+    Write-Host "[2/8] 驗證安裝完成後未自動啟動"
+    if (Test-Path -LiteralPath $RuntimePath) {
+        throw "安裝完成後不應自行建立 runtime.json。"
+    }
+    $unexpectedProcesses = @(
+        Get-CimInstance Win32_Process -ErrorAction Stop |
+            Where-Object {
+                $_.ExecutablePath -and
+                [IO.Path]::GetFullPath($_.ExecutablePath) -eq [IO.Path]::GetFullPath($AppExe)
+            }
+    )
+    if ($unexpectedProcesses.Count -gt 0) {
+        throw "安裝完成後主程式被自動啟動。"
+    }
+
+    Write-Host "[3/8] 驗證完整離線安裝內容與版本"
     if (-not (Test-Path -LiteralPath $AppExe)) {
         throw "安裝後找不到主程式：$AppExe"
     }
@@ -91,8 +106,36 @@ try {
     if (-not (Test-Path -LiteralPath $StartMenuDir)) {
         throw "未建立開始功能表捷徑。"
     }
+    $pdfiumDll = Get-ChildItem -LiteralPath $InstallDir -Recurse -File -Filter "pdfium.dll" | Select-Object -First 1
+    $pdfiumLicenses = @(
+        Get-ChildItem -LiteralPath $InstallDir -Recurse -File |
+            Where-Object { $_.FullName -match "pypdfium2-.+\.dist-info.+licenses" }
+    )
+    $dndLicenses = @(
+        Get-ChildItem -LiteralPath $InstallDir -Recurse -File |
+            Where-Object { $_.FullName -match "streamlit_dnd-.+\.dist-info.+licenses" }
+    )
+    if (-not $pdfiumDll -or $pdfiumLicenses.Count -eq 0 -or $dndLicenses.Count -eq 0) {
+        throw "安裝內容缺少 PDFium 或第三方授權文件。"
+    }
 
-    Write-Host "[3/6] 以安裝後捷徑等效方式啟動"
+    Write-Host "[4/8] 執行安裝版自我檢查"
+    $selfTest = Start-Process -FilePath $AppExe -ArgumentList "--self-test" -Wait -PassThru -WindowStyle Hidden
+    if ($selfTest.ExitCode -ne 0) {
+        $selfTestLog = Join-Path $DataDir "self-test.log"
+        $detail = if (Test-Path -LiteralPath $selfTestLog) {
+            Get-Content -Raw -Encoding UTF8 -LiteralPath $selfTestLog
+        }
+        else {
+            "未產生 self-test.log。"
+        }
+        throw "安裝版自我檢查失敗，結束代碼 $($selfTest.ExitCode)：`n$detail"
+    }
+    if (Test-Path -LiteralPath $RuntimePath) {
+        throw "自我檢查不應啟動本機服務。"
+    }
+
+    Write-Host "[5/8] 以安裝後捷徑等效方式啟動"
     $LauncherProcess = Start-Process -FilePath $AppExe -PassThru -WindowStyle Hidden
     Wait-Until { Test-Path -LiteralPath $RuntimePath } 30 "啟動器未建立執行狀態。"
     $runtime = Get-Content -Raw -Encoding UTF8 -LiteralPath $RuntimePath | ConvertFrom-Json
@@ -109,18 +152,18 @@ try {
         }
     } 30 "本機服務健康檢查逾時。"
 
-    Write-Host "[4/6] 驗證服務只監聽 127.0.0.1"
+    Write-Host "[6/8] 驗證服務只監聽 127.0.0.1"
     $port = ([Uri]$runtime.url).Port
     $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction Stop)
     if ($listeners.Count -eq 0 -or ($listeners | Where-Object { $_.LocalAddress -ne "127.0.0.1" })) {
         throw "本機服務監聽範圍不符合要求。"
     }
 
-    Write-Host "[5/6] 正常關閉並檢查背景程序"
+    Write-Host "[7/8] 正常關閉並檢查背景程序"
     Stop-VerifiedLauncher
     Wait-Until { -not (Test-Path -LiteralPath $RuntimePath) } 5 "關閉後未清除 runtime.json。"
 
-    Write-Host "[6/6] 解除安裝並檢查清理結果"
+    Write-Host "[8/8] 解除安裝並檢查清理結果"
     $uninstaller = Join-Path $InstallDir "unins000.exe"
     if (-not (Test-Path -LiteralPath $uninstaller)) {
         throw "找不到解除安裝程式。"

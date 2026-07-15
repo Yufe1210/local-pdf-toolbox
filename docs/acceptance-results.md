@@ -14,19 +14,23 @@
 | 空白、損壞、非 PDF、加密及少於兩份 | 通過 | 核心拒絕測試，錯誤不產生部分結果 |
 | 首頁與合併介面 | 通過 | 本機瀏覽器檢查首頁、導覽、版本、中文命名與停用狀態 |
 | 排序、移除、清除、合併及下載狀態 | 通過 | Streamlit 應用測試以真實 PDF bytes 驗證完整狀態流程 |
+| 單一上傳狀態、卡片及拖曳事件 | 自動化通過、GUI 待驗收 | 上傳器重設、唯一 ID、重複中文檔名、上下移與 `streamlit-dnd` 事件均使用同一 `pdf_items`；實際滑鼠拖曳待一般瀏覽器確認 |
+| 第一頁縮圖、旋轉及記憶體保護 | 通過 | PDFium 直向、旋轉與極端長頁測試；220 × 400 像素上限、50 份／500 MB 邊界及成功／失敗路徑資源釋放測試 |
 | 只監聽 loopback | 通過 | 原始碼服務實測與啟動器設定測試均為 `127.0.0.1` |
 | 啟動器結束子程序 | 通過 | 正常關閉、runtime 清理及子程序終止測試 |
 | 更新提示安全 | 通過 | HTTPS、重新導向、手動 feed、GitHub Release 開啟及舊有下載驗證元件測試 |
 | 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
-| PyInstaller onedir | 建置通過、GUI 待驗收 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 11 個必要模組全數存在，實際 GUI 仍待其他電腦驗收 |
+| PyInstaller onedir | 建置通過、GUI 待驗收 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 14 個必要模組全數存在，PDFium DLL 與 pypdfium2／streamlit-dnd 授權檔均存在 |
+| 安裝版 `--self-test` | 最終 onedir 通過 | 成功載入首頁、合併、拖曳及預覽模組，並完成代表性 PDF 驗證、PDFium 縮圖與二頁合併 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
 | 安裝後不自動啟動 | 通過 | installer 不含 `[Run]`／`postinstall`，仍建立桌面與開始功能表捷徑 |
-| 版本與發布設定一致性 | 通過 | Python 3.13.14 環境執行 34 項測試全數通過 |
+| 版本與發布設定一致性 | 通過 | Python 3.13.14 環境執行 47 項測試全數通過 |
 
 執行指令：
 
 ```powershell
 uv run python -m pytest
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -SkipInstaller
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -ReleaseBuild -SkipPackagedSmokeTest
 ```
 
@@ -40,7 +44,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 
 修正版改用明確必要模組清單，並在 PyInstaller 完成後逐一核對 `PYZ-00.toc`；安裝程式也不再於安裝完成後自動啟動。
 
-修正版未簽章候選檔已於 Python 3.13.14 環境完成建置；之後仍需在其他乾淨 Windows 電腦實際開啟首頁與合併頁：
+先前不含縮圖功能的修正版未簽章候選檔已於 Python 3.13.14 環境完成建置；它已被本次新候選檔取代：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
 - 大小：62,794,809 bytes（約 59.89 MiB）
@@ -50,6 +54,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 簽章狀態：`NotSigned`
 - 封裝模組核對：`packaging/required_toolbox_modules.txt` 所列 11 個模組全部存在
 
+2026-07-15 含第一頁預覽、拖曳、瀏覽器關閉狀態與 `--self-test` 的最新未簽章候選檔已完成編譯，但不得在乾淨 Windows 驗收前上傳 Release：
+
+- 檔名：`本機PDF工具箱-安裝程式.exe`
+- 大小：65,767,851 bytes（約 62.72 MiB）
+- onedir 大小：219,747,206 bytes（約 209.57 MiB）
+- 版本：0.1.0
+- SHA-256：`5f11f443e759d0e55c8964a6b853eb9c01fc1faae5938c9b17e505f669aab72c`
+- 簽章狀態：`NotSigned`
+- 封裝核對：14 個自家模組、`pdfium.dll`、pypdfium2／PDFium 完整 BUILD_LICENSES 與 streamlit-dnd 授權檔
+- 視覺核對：代表性直向紅色頁、橫向藍色頁及第一頁縮圖均清楚，順序、方向與頁面交界正常
+- 本機執行證據：建置過程因前一個中間雜湊被 Application Control 封鎖而使用 `-SkipPackagedSmokeTest`；安裝程式完成後，對其中實際壓入的最終 onedir 重新執行 `--self-test` 與 loopback smoke test，兩者均通過且只監聽 `127.0.0.1`
+- 限制：尚未在無 Python 的乾淨 Windows 安裝、實際操作 GUI 並解除安裝，不得上傳 GitHub Release
+
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
 
 ## 正式發布前尚待驗證
@@ -58,9 +75,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | --- | --- | --- |
 | 正式 Authenticode 簽章 | 延後 | 0.1.0 已決定採未簽章公開測試版；未來恢復自動更新或擴大發布前再取得 |
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
-| 未簽章封裝後 smoke test | 待處理 | 目前主機的 Smart App Control 會封鎖，需移至其他乾淨 Windows 電腦 |
+| 最新候選檔封裝後 smoke test | 本機通過、乾淨環境待處理 | 最終 onedir 的 `--self-test`、健康檢查與 loopback 監聽通過；仍需在無 Python 電腦重跑安裝版驗收 |
 | 無 Python 電腦離線安裝 | 待處理 | 目前主機未安裝 Windows Sandbox，也沒有可用的既存 Windows VM |
-| 捷徑雙擊、GUI、關閉及無背景程序 | 待處理 | 需在未簽章安裝後以允許旗標執行 `scripts/verify-release.ps1` |
+| 捷徑雙擊、GUI、拖曳、關閉頁面及無背景程序 | 待處理 | 本機已存在既有安裝，驗收腳本為避免覆蓋而會中止；需在乾淨 Windows 以允許旗標執行 `scripts/verify-release.ps1` 並完成人工 GUI 檢查 |
 | 解除安裝與資料清理 | 待處理 | 需在同一乾淨 Windows 環境完成驗收腳本 |
 | Windows 10／11 x64 相容性 | 待處理 | 至少各使用一個目標版本驗收 |
 | 0.1.0 更新至後續版本 | 待處理 | 待下一個版本驗證提示、GitHub 下載與手動覆蓋安裝 |
@@ -69,4 +86,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 
 本機 Windows Code Integrity 原則會阻擋新產生的未簽章應用程式。事件記錄 `Microsoft-Windows-CodeIntegrity/Operational` 中可見事件 3033 與 3077，指出 `本機PDF工具箱.exe` 未達 Enterprise signing level，政策 ID 為 `{0283ac0f-fff1-49ae-ada1-8a933130cad6}`。
 
-因此本機只能略過「未簽章封裝執行」來產生候選檔。建置腳本會明確警告未簽章風險；是否可發布改由其他乾淨 Windows 電腦的完整安裝、啟動、合併及解除安裝驗收決定。
+實測顯示此政策對重新建置後的不同未簽章雜湊可能有不同結果：一組 onedir 通過自我檢查及服務 smoke test，中間建置曾在 `Start-Process` 被 Application Control 封鎖，最終 onedir 重試後又通過。因此本機成功不能視為其他電腦也可執行，建置腳本仍會明確警告未簽章風險；是否可發布改由其他乾淨 Windows 電腦的完整安裝、啟動、合併及解除安裝驗收決定。

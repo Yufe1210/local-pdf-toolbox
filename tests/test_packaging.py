@@ -84,3 +84,24 @@ def test_all_toolbox_modules_are_explicit_packaging_inputs() -> None:
     assert "collect_submodules" not in spec
     assert "required_toolbox_modules.txt" in build_script
     assert "打包後缺少必要模組" in build_script
+
+
+def test_preview_runtime_and_license_files_are_packaged() -> None:
+    spec = (ROOT / "packaging" / "pdf_toolbox.spec").read_text(encoding="utf-8")
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8-sig")
+
+    assert 'collect_all("pypdfium2")' in spec
+    assert 'collect_all("pypdfium2_raw")' in spec
+    assert 'collect_all("streamlit_dnd")' in spec
+    assert 'copy_metadata("pypdfium2")' in spec
+    assert 'copy_metadata("streamlit-dnd")' in spec
+    assert "打包後缺少 PDFium 原生程式庫" in build_script
+    assert "第三方授權文件" in build_script
+
+
+def test_release_verifier_checks_no_auto_start_and_installed_self_test() -> None:
+    verifier = (ROOT / "scripts" / "verify-release.ps1").read_text(encoding="utf-8-sig")
+
+    assert "驗證安裝完成後未自動啟動" in verifier
+    assert 'ArgumentList "--self-test"' in verifier
+    assert "自我檢查不應啟動本機服務" in verifier

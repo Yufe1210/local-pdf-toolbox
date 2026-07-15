@@ -8,3 +8,6 @@ class PDFToolError(ValueError):
 class PDFMergeError(PDFToolError):
     """Raised when one or more PDF files cannot be merged."""
 
+
+class PDFPreviewError(PDFToolError):
+    """Raised when the first page of a PDF cannot be rendered safely."""

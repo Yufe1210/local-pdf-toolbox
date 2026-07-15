@@ -2,7 +2,7 @@
 
 ## 打包與安裝
 
-PyInstaller 負責把啟動器、Python 解譯器、Streamlit、pypdf、預覽用 pypdfium2／PDFium 及應用程式模組整理成 `onedir`。Inno Setup 再把整個資料夾壓縮成單一安裝程式。pypdfium2 尚未加入目前候選檔；實作預覽時必須同步收集其原生元件與發行授權文件。
+PyInstaller 負責把啟動器、Python 解譯器、Streamlit、pypdf、預覽用 pypdfium2／PDFium、拖曳元件及應用程式模組整理成 `onedir`。Inno Setup 再把整個資料夾壓縮成單一安裝程式。建置腳本會確認 PDFium 原生 DLL 與 pypdfium2／streamlit-dnd 發行授權文件都已收集，缺少時立即失敗。
 
 ```mermaid
 flowchart LR
@@ -33,7 +33,7 @@ flowchart LR
 .\scripts\build.ps1
 ```
 
-腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組清單核對、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
+腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組與 PDFium／授權檔核對、安裝版 `--self-test`、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
 
 `0.1.0` 未簽章公開測試版建置：
 
@@ -58,7 +58,7 @@ flowchart LR
   -AllowUnsignedDevelopmentBuild
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、版本、桌面與開始功能表捷徑、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。合併介面預覽工作會再加入「安裝後未自行啟動」及安裝版 `--self-test`，驗證首頁、合併介面、預覽依賴與代表性第一頁渲染；但人工 GUI 驗收仍不可由健康檢查取代。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會驗證首頁、合併介面、拖曳與預覽依賴、代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由健康檢查取代。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
 ## 版本策略
 

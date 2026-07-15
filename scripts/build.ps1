@@ -157,6 +157,22 @@ $appExe = Join-Path $distDir "本機PDF工具箱.exe"
 if (-not (Test-Path -LiteralPath $appExe)) {
     throw "找不到打包後執行檔：$appExe"
 }
+$pdfiumDll = Get-ChildItem -LiteralPath $distDir -Recurse -File -Filter "pdfium.dll" | Select-Object -First 1
+if (-not $pdfiumDll) {
+    throw "打包後缺少 PDFium 原生程式庫。"
+}
+$pdfiumLicenses = @(
+    Get-ChildItem -LiteralPath $distDir -Recurse -File |
+        Where-Object { $_.FullName -match "pypdfium2-.+\.dist-info.+licenses" }
+)
+$dndLicenses = @(
+    Get-ChildItem -LiteralPath $distDir -Recurse -File |
+        Where-Object { $_.FullName -match "streamlit_dnd-.+\.dist-info.+licenses" }
+)
+if ($pdfiumLicenses.Count -eq 0 -or $dndLicenses.Count -eq 0) {
+    throw "打包後缺少 pypdfium2、PDFium 或 streamlit-dnd 授權文件。"
+}
+Write-Host "已驗證 PDFium 與第三方授權文件均已封裝。"
 if ($signingCertificate) {
     Sign-ApplicationBundle $distDir $signingCertificate
 }
@@ -165,7 +181,18 @@ if ($SkipPackagedSmokeTest) {
     Write-Warning "[5/6] 已略過打包後 smoke test；必須在其他乾淨 Windows 完整驗收後才能發布。"
 }
 else {
-    Write-Host "[5/6] 驗證打包後本機服務"
+    Write-Host "[5/6] 驗證打包後自我檢查與本機服務"
+    $selfTest = Start-Process -FilePath $appExe -ArgumentList "--self-test" -Wait -PassThru -WindowStyle Hidden
+    if ($selfTest.ExitCode -ne 0) {
+        $selfTestLog = Join-Path (Join-Path $env:LOCALAPPDATA "LocalPDFToolbox") "self-test.log"
+        $detail = if (Test-Path -LiteralPath $selfTestLog) {
+            Get-Content -Raw -Encoding UTF8 -LiteralPath $selfTestLog
+        }
+        else {
+            "未產生 self-test.log。"
+        }
+        throw "打包後自我檢查失敗：`n$detail"
+    }
     $port = Get-FreeLoopbackPort
     $process = Start-Process -FilePath $appExe -ArgumentList @("--run-server", "--port", "$port") -PassThru -WindowStyle Hidden
     try {

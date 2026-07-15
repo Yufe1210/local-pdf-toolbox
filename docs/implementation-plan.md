@@ -1,6 +1,6 @@
 # 本機 PDF 工具箱實作計畫
 
-> 更新日期：2026-07-14
+> 更新日期：2026-07-15
 >
 > 目前目標：完成可交付且可在無 Python 電腦離線安裝的 `0.1.0`。
 
@@ -11,14 +11,14 @@
 | uv 與 Python 3.13 專案 | 已完成 | `uv.lock` 已建立 |
 | PDF 合併核心 | 已完成 | 記憶體內驗證與合併 |
 | Streamlit 合併介面 | 已完成 | 可排序、移除、命名及下載 |
-| 自動化測試 | 已完成 | 33 個核心、完整合併互動、介面、啟動器、更新與打包設定測試通過 |
+| 自動化測試 | 已完成 | 34 個核心、完整合併互動、介面、啟動器、更新與打包設定測試通過；封裝清單必須與所有自家 Python 模組完全一致 |
 | 瀏覽器介面驗證 | 已完成 | 首頁、功能導覽、合併頁、中文命名與檔案不足時的停用狀態已檢查 |
 | PDF 渲染驗證 | 已完成 | 封裝流程完成後再次檢查，順序、直橫 A4 頁面及內容正確 |
 | Git 與 GitHub repository | 已完成 | `main` 已推送至公開的 `Yufe1210/local-pdf-toolbox`，`origin` 與 HTTPS 更新資訊均已驗證 |
 | 工具箱模組化 | 已完成 | 首頁、共用驗證、合併功能與介面已拆分 |
 | 桌面啟動器 | 進行中 | 已完成單一執行個體、動態連接埠、瀏覽器開啟、結束控制與 GitHub 手動更新入口；待安裝版 GUI 驗收 |
-| PyInstaller onedir | 進行中 | spec 與一鍵建置已建立，封裝後服務曾通過 loopback 健康檢查；待未簽章公開測試版於乾淨環境驗收 |
-| Inno Setup 安裝程式 | 進行中 | 繁體中文 installer 與未簽章測試安裝包已成功編譯，採 per-user 離線安裝、捷徑及解除安裝；待乾淨環境驗收 |
+| PyInstaller onedir | 進行中 | 已修正動態載入的 UI／功能模組漏包問題；Python 3.13.14 建置成功並核對 11 個必要模組，待乾淨環境 GUI 驗收 |
+| Inno Setup 安裝程式 | 進行中 | 修正版未簽章安裝包已成功編譯，採 per-user 離線安裝、捷徑及解除安裝；安裝完成後不自動啟動，待乾淨環境驗收 |
 | 發布驗收腳本 | 已完成 | 僅使用 Windows PowerShell，自動驗證簽章、安裝、啟動、loopback、結束、背景程序與解除安裝 |
 | 無 Python 電腦驗證 | 尚未開始 | 需使用 Windows Sandbox 或乾淨 VM |
 | 更新機制 | 進行中 | 已改為 HTTPS 檢查版本並開啟 GitHub Releases 手動下載；待 0.1.0 → 0.2.0 提示及覆蓋安裝驗證 |
@@ -39,7 +39,7 @@ uv run streamlit run app.py
 | --- | --- | --- | --- |
 | 1 | `feature/toolbox-foundation` | 工具箱化、首頁與功能模組拆分 | **已完成**；合併行為不變，既有測試通過 |
 | 2 | `feature/desktop-launcher` | 雙擊啟動、本機連接埠、瀏覽器與結束控制 | **程式已完成**；待安裝版 GUI 與完整結束驗收 |
-| 3 | `build/windows-packaging` | PyInstaller onedir、Inno Setup 與一鍵建置 | **建置已完成**；未簽章測試安裝包與 SHA-256 已產生並檢查 |
+| 3 | `fix/package-ui-modules` | 修正 PyInstaller 模組收集、增加封裝內容防護並取消安裝後自動啟動 | **已完成修正與完整建置**；11 個必要模組核對成功，待乾淨 Windows GUI 回歸驗收 |
 | 4 | `release/0.1.0` | 未簽章公開測試版、乾淨 Windows 驗收與首次發布 | 無 Python 電腦可離線安裝、使用及解除安裝，且發布頁明確揭露未簽章風險 |
 | 5 | `feature/update-foundation` | GitHub 更新資訊與手動覆蓋安裝驗證 | 離線不受影響，0.1.0 可提示並開啟新版 Release 頁面 |
 | 6 | `feature/split-pdf` | 拆分 PDF 與 0.2.0 更新驗證 | 0.1.0 可提示 0.2.0，使用者能手動下載及覆蓋安裝 |
@@ -98,8 +98,10 @@ flowchart TD
 ### 3. Windows 打包與安裝
 
 - 使用 PyInstaller `onedir`，收集 Python、Streamlit 前端資源、pypdf 和功能模組。
+- 動態載入的自家模組必須列入 `packaging/required_toolbox_modules.txt`；建置腳本必須核對 PyInstaller 模組清單，缺少任一模組即失敗。
 - 使用 Inno Setup 將完整 onedir 壓入單一離線安裝程式。
 - 安裝到使用者範圍，建立捷徑與解除安裝資訊。
+- 安裝完成頁不得預設啟動工具；使用者之後從捷徑啟動。
 - 建立可重複執行的 `scripts/build.ps1`。
 - 最終輸出為 `release/本機PDF工具箱-安裝程式.exe`，安裝時不得下載額外內容。
 
@@ -123,6 +125,7 @@ flowchart TD
 正式發布前需在沒有 Python 的乾淨 Windows 10／11 x64 環境確認：
 
 - 安裝程式可完全離線安裝。
+- 安裝完成後不自動啟動工具或瀏覽器。
 - 桌面捷徑雙擊後自動開啟介面，且不顯示命令列視窗。
 - PDF 不離開本機，服務不暴露至區域網路。
 - 合併輸出順序、頁數、尺寸、方向與視覺內容正確。

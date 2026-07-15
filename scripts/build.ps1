@@ -107,7 +107,7 @@ Write-Host "[1/6] 同步 uv 環境"
 
 Write-Host "[2/6] 執行測試"
 $env:PYTHONUTF8 = "1"
-& uv run pytest
+& uv run python -m pytest
 if ($LASTEXITCODE -ne 0) {
     throw "測試失敗。"
 }
@@ -127,10 +127,30 @@ $configJson = @{
 $env:PDF_TOOLBOX_UPDATE_CONFIG = $generatedConfig
 
 Write-Host "[4/6] 建立 PyInstaller onedir"
-& uv run pyinstaller --noconfirm --clean packaging\pdf_toolbox.spec
+& uv run python -m PyInstaller --noconfirm --clean packaging\pdf_toolbox.spec
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller 建置失敗。"
 }
+
+$requiredModules = @(
+    Get-Content -Encoding UTF8 -LiteralPath (Join-Path $Root "packaging\required_toolbox_modules.txt") |
+        Where-Object { $_.Trim() }
+)
+$pyzToc = Join-Path $Root "build\pdf_toolbox\PYZ-00.toc"
+if (-not (Test-Path -LiteralPath $pyzToc)) {
+    throw "找不到 PyInstaller 模組清單：$pyzToc"
+}
+$missingModules = @(
+    foreach ($module in $requiredModules) {
+        if (-not (Select-String -LiteralPath $pyzToc -SimpleMatch "('$module'," -Quiet)) {
+            $module
+        }
+    }
+)
+if ($missingModules.Count -gt 0) {
+    throw "打包後缺少必要模組：$($missingModules -join ', ')"
+}
+Write-Host "已驗證 $($requiredModules.Count) 個本機 PDF 工具箱模組均已封裝。"
 
 $distDir = Join-Path $Root "dist\本機PDF工具箱"
 $appExe = Join-Path $distDir "本機PDF工具箱.exe"

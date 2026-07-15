@@ -50,8 +50,5 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Name: "{group}\本機 PDF 工具箱"; Filename: "{app}\本機PDF工具箱.exe"
 Name: "{autodesktop}\本機 PDF 工具箱"; Filename: "{app}\本機PDF工具箱.exe"; Tasks: desktopicon
 
-[Run]
-Filename: "{app}\本機PDF工具箱.exe"; Description: "啟動本機 PDF 工具箱"; Flags: nowait postinstall skipifsilent
-
 [UninstallDelete]
 Type: filesandordirs; Name: "{localappdata}\LocalPDFToolbox"

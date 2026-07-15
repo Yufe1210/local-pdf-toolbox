@@ -3,12 +3,18 @@
 import os
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_all, collect_submodules
+from PyInstaller.utils.hooks import collect_all
 
 
 root = Path(SPECPATH).parent
 streamlit_datas, streamlit_binaries, streamlit_hiddenimports = collect_all("streamlit")
-toolbox_hiddenimports = collect_submodules("pdf_toolbox")
+toolbox_hiddenimports = [
+    module.strip()
+    for module in (root / "packaging" / "required_toolbox_modules.txt")
+    .read_text(encoding="utf-8")
+    .splitlines()
+    if module.strip()
+]
 update_config = Path(
     os.environ.get("PDF_TOOLBOX_UPDATE_CONFIG", str(root / "update-config.json"))
 ).resolve()

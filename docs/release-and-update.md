@@ -15,6 +15,10 @@ flowchart LR
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
 
+`app.py` 由 Streamlit 在執行階段載入，PyInstaller 不一定能從啟動器自動推導其匯入。所有自家必要模組因此明確記錄於 `packaging/required_toolbox_modules.txt`；每次 PyInstaller 建置後，`scripts/build.ps1` 會核對 `PYZ-00.toc`，缺少任一模組就停止，不產生可交付候選檔。Streamlit 的 `/_stcore/health` 只能證明服務程序存活，不能單獨證明頁面程式已成功匯入，因此乾淨 Windows 驗收仍必須實際開啟首頁與合併頁。
+
+安裝完成頁不自動啟動工具或開啟瀏覽器。安裝者關閉精靈後，再從桌面或開始功能表捷徑啟動。
+
 安裝與解除安裝精靈使用專案內固定版本的 Inno Setup 官方繁體中文翻譯 `packaging/languages/ChineseTraditional.isl`，避免建置電腦是否額外安裝語言檔影響結果。更新翻譯時需以 Inno Setup 官方翻譯來源為準並重新編譯驗證。
 
 發行版的更新來源由 `update-config.json` 提供，目前指向公開 repository 內 `updates/update.json` 的 HTTPS raw URL。啟動器只讀取版本、發布說明及 GitHub Release 頁面，不自動下載或執行安裝程式。
@@ -29,7 +33,7 @@ flowchart LR
 .\scripts\build.ps1
 ```
 
-腳本會依序執行 `uv sync`、`pytest`、PyInstaller、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
+腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組清單核對、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
 
 `0.1.0` 未簽章公開測試版建置：
 
@@ -106,7 +110,8 @@ flowchart LR
 - 同步更新 `docs/` 中的需求、狀態及發布資訊。
 - 執行全部測試與 PDF 渲染檢查。
 - 建立乾淨的 PyInstaller onedir。
-- 測試打包後啟動、PDF 操作與完整結束。
+- 核對 `packaging/required_toolbox_modules.txt` 中的模組均存在於 PyInstaller 模組清單。
+- 測試打包後啟動、實際載入首頁與合併頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
 - 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。
 - 產生並驗證 SHA-256。

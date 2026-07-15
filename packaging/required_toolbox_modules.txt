@@ -1,0 +1,11 @@
+pdf_toolbox
+pdf_toolbox.config
+pdf_toolbox.errors
+pdf_toolbox.features
+pdf_toolbox.features.merge
+pdf_toolbox.filenames
+pdf_toolbox.pdf
+pdf_toolbox.ui
+pdf_toolbox.ui.home
+pdf_toolbox.ui.merge
+pdf_toolbox.updater

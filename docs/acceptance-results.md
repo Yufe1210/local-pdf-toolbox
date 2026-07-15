@@ -1,6 +1,6 @@
 # 0.1.0 驗收紀錄
 
-> 更新日期：2026-07-14
+> 更新日期：2026-07-15
 >
 > 本文件記錄實際執行結果；產品需求仍以 `requirements.md` 為準。
 
@@ -18,9 +18,10 @@
 | 啟動器結束子程序 | 通過 | 正常關閉、runtime 清理及子程序終止測試 |
 | 更新提示安全 | 通過 | HTTPS、重新導向、手動 feed、GitHub Release 開啟及舊有下載驗證元件測試 |
 | 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
-| PyInstaller onedir | 通過 | Python 3.13、Streamlit、pypdf 與應用資源成功封裝 |
+| PyInstaller onedir | 建置通過、GUI 待驗收 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 11 個必要模組全數存在，實際 GUI 仍待其他電腦驗收 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
-| 版本與發布設定一致性 | 通過 | 33 項測試全數通過 |
+| 安裝後不自動啟動 | 通過 | installer 不含 `[Run]`／`postinstall`，仍建立桌面與開始功能表捷徑 |
+| 版本與發布設定一致性 | 通過 | Python 3.13.14 環境執行 34 項測試全數通過 |
 
 執行指令：
 
@@ -29,13 +30,25 @@ uv run pytest
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -ReleaseBuild -SkipPackagedSmokeTest
 ```
 
-最近一次未簽章公開測試候選檔已完成建置；必須完成乾淨 Windows 驗收並在 Release 揭露未簽章風險後才能正式發布：
+2026-07-15 實際安裝舊候選檔後，瀏覽器顯示 `ModuleNotFoundError: No module named 'pdf_toolbox.ui'`。原因是 `app.py` 由 Streamlit 動態載入，而舊封裝未完整收集其匯入；僅檢查 `/_stcore/health` 未觸發頁面程式，因此沒有提早發現。下列舊候選檔已判定無效，不得上傳 GitHub Release：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
 - 大小：62,245,509 bytes（約 59.36 MiB）
 - 版本：0.1.0.0
 - SHA-256：`6f85aab1a884a5172ef28942f38442373fe0bb8bd3e181ec7425b6126567f19d`
 - 簽章狀態：`NotSigned`
+
+修正版改用明確必要模組清單，並在 PyInstaller 完成後逐一核對 `PYZ-00.toc`；安裝程式也不再於安裝完成後自動啟動。
+
+修正版未簽章候選檔已於 Python 3.13.14 環境完成建置；之後仍需在其他乾淨 Windows 電腦實際開啟首頁與合併頁：
+
+- 檔名：`本機PDF工具箱-安裝程式.exe`
+- 大小：62,794,809 bytes（約 59.89 MiB）
+- onedir 大小：211,774,371 bytes（約 201.96 MiB）
+- 版本：0.1.0.0
+- SHA-256：`8de14fd8f17d73f69eda2d479732915a420f39ac4970ea9af7d9892ae4b67a48`
+- 簽章狀態：`NotSigned`
+- 封裝模組核對：`packaging/required_toolbox_modules.txt` 所列 11 個模組全部存在
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
 

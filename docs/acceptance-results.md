@@ -21,17 +21,17 @@
 | 更新提示安全 | 通過 | HTTPS、重新導向、手動 feed、GitHub Release 開啟及舊有下載驗證元件測試 |
 | 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
 | PyInstaller onedir | 建置通過、GUI 待驗收 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 14 個必要模組全數存在，PDFium DLL 與 pypdfium2／streamlit-dnd 授權檔均存在 |
-| 安裝版 `--self-test` | 最終 onedir 通過 | 成功載入首頁、合併、拖曳及預覽模組，並完成代表性 PDF 驗證、PDFium 縮圖與二頁合併 |
+| 安裝版 `--self-test` | 最終 onedir 通過 | 實際執行封裝內首頁與合併頁、建立兩張重複中文檔名 PDF 卡片、載入拖曳元件後端，並完成代表性 PDF 驗證、PDFium 縮圖與二頁合併 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
 | 安裝後不自動啟動 | 通過 | installer 不含 `[Run]`／`postinstall`，仍建立桌面與開始功能表捷徑 |
-| 版本與發布設定一致性 | 通過 | Python 3.13.14 環境執行 47 項測試全數通過 |
+| 版本與發布設定一致性 | 通過 | Python 3.13.14 與 Streamlit 1.59.1 環境執行 48 項測試全數通過 |
 
 執行指令：
 
 ```powershell
 uv run python -m pytest
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -SkipInstaller
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -ReleaseBuild -SkipPackagedSmokeTest
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -ReleaseBuild
 ```
 
 2026-07-15 實際安裝舊候選檔後，瀏覽器顯示 `ModuleNotFoundError: No module named 'pdf_toolbox.ui'`。原因是 `app.py` 由 Streamlit 動態載入，而舊封裝未完整收集其匯入；僅檢查 `/_stcore/health` 未觸發頁面程式，因此沒有提早發現。下列舊候選檔已判定無效，不得上傳 GitHub Release：
@@ -54,17 +54,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 簽章狀態：`NotSigned`
 - 封裝模組核對：`packaging/required_toolbox_modules.txt` 所列 11 個模組全部存在
 
-2026-07-15 含第一頁預覽、拖曳、瀏覽器關閉狀態與 `--self-test` 的最新未簽章候選檔已完成編譯，但不得在乾淨 Windows 驗收前上傳 Release：
+2026-07-15 含第一頁預覽、拖曳、瀏覽器關閉狀態與強化版 `--self-test` 的最新未簽章候選檔已完成完整編譯，但不得在乾淨 Windows 驗收前上傳 Release：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
-- 大小：65,767,851 bytes（約 62.72 MiB）
-- onedir 大小：219,747,206 bytes（約 209.57 MiB）
+- 大小：65,771,850 bytes（約 62.72 MiB）
+- onedir 大小：219,748,540 bytes（約 209.57 MiB；3,336 個檔案）
 - 版本：0.1.0
-- SHA-256：`5f11f443e759d0e55c8964a6b853eb9c01fc1faae5938c9b17e505f669aab72c`
+- SHA-256：`7f71f8e92fff6f94e2aa59b9b1fcbfe4c34f1a71b8459141a8896c6510bb284d`
 - 簽章狀態：`NotSigned`
 - 封裝核對：14 個自家模組、`pdfium.dll`、pypdfium2／PDFium 完整 BUILD_LICENSES 與 streamlit-dnd 授權檔
 - 視覺核對：代表性直向紅色頁、橫向藍色頁及第一頁縮圖均清楚，順序、方向與頁面交界正常
-- 本機執行證據：建置過程因前一個中間雜湊被 Application Control 封鎖而使用 `-SkipPackagedSmokeTest`；安裝程式完成後，對其中實際壓入的最終 onedir 重新執行 `--self-test` 與 loopback smoke test，兩者均通過且只監聽 `127.0.0.1`
+- 本機執行證據：本次 `-ReleaseBuild` 未略過任何步驟；強化版 `--self-test` 實際執行封裝內首頁、合併頁、兩張卡片與拖曳元件後端，封裝後 loopback smoke test 亦通過且只監聽 `127.0.0.1`
 - 限制：尚未在無 Python 的乾淨 Windows 安裝、實際操作 GUI 並解除安裝，不得上傳 GitHub Release
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
@@ -75,7 +75,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | --- | --- | --- |
 | 正式 Authenticode 簽章 | 延後 | 0.1.0 已決定採未簽章公開測試版；未來恢復自動更新或擴大發布前再取得 |
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
-| 最新候選檔封裝後 smoke test | 本機通過、乾淨環境待處理 | 最終 onedir 的 `--self-test`、健康檢查與 loopback 監聽通過；仍需在無 Python 電腦重跑安裝版驗收 |
+| 最新候選檔封裝後 smoke test | 本機通過、乾淨環境待處理 | 最新完整建置未使用略過參數；最終 onedir 的強化版 `--self-test`、健康檢查與 loopback 監聽通過，仍需在無 Python 電腦重跑安裝版驗收 |
 | 無 Python 電腦離線安裝 | 待處理 | 目前主機未安裝 Windows Sandbox，也沒有可用的既存 Windows VM |
 | 捷徑雙擊、GUI、拖曳、關閉頁面及無背景程序 | 待處理 | 本機已存在既有安裝，驗收腳本為避免覆蓋而會中止；需在乾淨 Windows 以允許旗標執行 `scripts/verify-release.ps1` 並完成人工 GUI 檢查 |
 | 解除安裝與資料清理 | 待處理 | 需在同一乾淨 Windows 環境完成驗收腳本 |

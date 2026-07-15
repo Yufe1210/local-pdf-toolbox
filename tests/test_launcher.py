@@ -30,7 +30,8 @@ def test_installed_self_test_covers_ui_preview_and_merge(monkeypatch, tmp_path: 
     assert launcher.main(["--self-test"]) == 0
     log = (tmp_path / "self-test.log").read_text(encoding="utf-8")
     assert "SELF-TEST OK" in log
-    assert "介面模組" in log
+    assert "首頁與合併介面" in log
+    assert "PDF 卡片與拖曳元件" in log
     assert "PDFium 第一頁預覽" in log
     assert "PDF 合併" in log
 

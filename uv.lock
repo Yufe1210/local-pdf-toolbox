@@ -367,7 +367,7 @@ requires-dist = [
     { name = "packaging", specifier = ">=26,<27" },
     { name = "pypdf", specifier = ">=6.0,<7" },
     { name = "pypdfium2", specifier = ">=5.11,<6" },
-    { name = "streamlit", specifier = ">=1.45,<2" },
+    { name = "streamlit", specifier = ">=1.59,<2" },
     { name = "streamlit-dnd", specifier = ">=0.1.1,<0.2" },
 ]
 

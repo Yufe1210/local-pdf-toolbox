@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from streamlit.components.v1 import html
+import streamlit as st
 
 
 SHUTDOWN_MONITOR_HTML = r"""
@@ -57,4 +57,4 @@ SHUTDOWN_MONITOR_HTML = r"""
 def render_shutdown_monitor() -> None:
     """Keep a tiny browser timer alive so a stopped service has a clear state."""
 
-    html(SHUTDOWN_MONITOR_HTML, height=0, width=0)
+    st.html(SHUTDOWN_MONITOR_HTML, unsafe_allow_javascript=True)

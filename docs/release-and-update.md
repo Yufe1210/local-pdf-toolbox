@@ -15,7 +15,7 @@ flowchart LR
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
 
-`app.py` 由 Streamlit 在執行階段載入，PyInstaller 不一定能從啟動器自動推導其匯入。所有自家必要模組因此明確記錄於 `packaging/required_toolbox_modules.txt`；每次 PyInstaller 建置後，`scripts/build.ps1` 會核對 `PYZ-00.toc`，缺少任一模組就停止，不產生可交付候選檔。Streamlit 的 `/_stcore/health` 只能證明服務程序存活，不能單獨證明頁面程式已成功匯入，因此乾淨 Windows 驗收仍必須實際開啟首頁與合併頁。
+`app.py` 由 Streamlit 在執行階段載入，PyInstaller 不一定能從啟動器自動推導其匯入。所有自家必要模組因此明確記錄於 `packaging/required_toolbox_modules.txt`；每次 PyInstaller 建置後，`scripts/build.ps1` 會核對 `PYZ-00.toc`，缺少任一模組就停止，不產生可交付候選檔。Streamlit 的 `/_stcore/health` 只能證明服務程序存活，不能單獨證明頁面程式已成功匯入。封裝後 `--self-test` 因此會以 Streamlit 測試執行器實際跑過首頁、合併頁、兩張 PDF 卡片與拖曳元件後端；乾淨 Windows 驗收仍必須在一般瀏覽器實際檢查畫面與滑鼠拖曳。
 
 安裝完成頁不自動啟動工具或開啟瀏覽器。安裝者關閉精靈後，再從桌面或開始功能表捷徑啟動。
 
@@ -39,11 +39,10 @@ flowchart LR
 
 ```powershell
 .\scripts\build.ps1 `
-  -ReleaseBuild `
-  -SkipPackagedSmokeTest
+  -ReleaseBuild
 ```
 
-目前開發電腦的 Smart App Control 會阻擋未簽章 onedir，因此本機建置可略過封裝後 smoke test，但產物必須移至未啟用相同封鎖政策、且沒有 Python 的乾淨 Windows 電腦完成安裝驗收後才能發布。使用者下載頁面與 Release 說明必須標示「未簽章測試版」，並說明 Windows 可能警告或直接封鎖。
+正式候選檔原則上不得略過封裝後 smoke test。`-SkipPackagedSmokeTest` 只供本機 Windows Application Control 確實封鎖新產生的未簽章 onedir 時診斷建置流程；使用該參數產生的檔案不能直接發布，仍須對實際壓入安裝程式的 onedir 補做 `--self-test` 與 loopback smoke test，並移至未啟用相同封鎖政策、且沒有 Python 的乾淨 Windows 電腦完成安裝驗收。使用者下載頁面與 Release 說明必須標示「未簽章測試版」，並說明 Windows 可能警告或直接封鎖。
 
 未來取得憑證後，可額外提供 `-CertificateThumbprint "憑證指紋"`。建置腳本會簽署 onedir 內尚未具有有效簽章的 `.exe`、`.dll`、`.pyd` 及最終安裝程式；簽章正式建置不得略過封裝後 smoke test。
 
@@ -58,7 +57,7 @@ flowchart LR
   -AllowUnsignedDevelopmentBuild
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會驗證首頁、合併介面、拖曳與預覽依賴、代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由健康檢查取代。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳元件後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。`-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
 ## 版本策略
 
@@ -112,7 +111,7 @@ flowchart LR
 - 建立乾淨的 PyInstaller onedir。
 - 核對 `packaging/required_toolbox_modules.txt` 中的模組均存在於 PyInstaller 模組清單。
 - 預覽功能加入後，核對 pypdfium2、PDFium 原生元件及必要授權文件均存在於 onedir 與安裝程式。
-- 執行安裝版 `--self-test`，驗證首頁、合併介面、預覽模組與代表性第一頁渲染。
+- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、兩張 PDF 卡片、拖曳元件後端、預覽模組與代表性第一頁渲染。
 - 測試打包後啟動、實際載入首頁與合併頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
 - 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。

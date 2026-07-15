@@ -63,6 +63,23 @@ def test_browser_shutdown_monitor_waits_for_health_then_shows_closed_state() -> 
     assert "window.close" not in SHUTDOWN_MONITOR_HTML
 
 
+def test_shutdown_monitor_uses_current_non_iframe_streamlit_api(monkeypatch) -> None:
+    from pdf_toolbox.ui import shutdown_notice
+
+    calls: list[tuple[str, bool]] = []
+    monkeypatch.setattr(
+        shutdown_notice.st,
+        "html",
+        lambda body, *, unsafe_allow_javascript=False: calls.append(
+            (body, unsafe_allow_javascript)
+        ),
+    )
+
+    shutdown_notice.render_shutdown_monitor()
+
+    assert calls == [(SHUTDOWN_MONITOR_HTML, True)]
+
+
 def test_merge_page_reorders_and_merges_in_display_order() -> None:
     app = merge_page_with_items(
         [

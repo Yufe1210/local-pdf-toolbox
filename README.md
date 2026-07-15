@@ -13,7 +13,7 @@
 
 ```powershell
 uv sync
-uv run streamlit run app.py
+uv run python -m streamlit run app.py
 ```
 
 啟動後，Streamlit 會顯示本機網址。依序上傳 PDF、用箭頭調整順序、輸入輸出檔名，再按下「合併 PDF」。
@@ -21,7 +21,7 @@ uv run streamlit run app.py
 ## 測試
 
 ```powershell
-uv run pytest
+uv run python -m pytest
 ```
 
 ## 隱私與限制

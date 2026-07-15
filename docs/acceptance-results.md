@@ -26,7 +26,7 @@
 執行指令：
 
 ```powershell
-uv run pytest
+uv run python -m pytest
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -ReleaseBuild -SkipPackagedSmokeTest
 ```
 

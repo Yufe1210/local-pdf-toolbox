@@ -28,7 +28,7 @@
 
 ```powershell
 uv sync
-uv run streamlit run app.py
+uv run python -m streamlit run app.py
 ```
 
 ## 目前執行順序
@@ -44,7 +44,7 @@ uv run streamlit run app.py
 | 5 | `feature/update-foundation` | GitHub 更新資訊與手動覆蓋安裝驗證 | 離線不受影響，0.1.0 可提示並開啟新版 Release 頁面 |
 | 6 | `feature/split-pdf` | 拆分 PDF 與 0.2.0 更新驗證 | 0.1.0 可提示 0.2.0，使用者能手動下載及覆蓋安裝 |
 
-每個階段需使用小型 Conventional Commit，並在同一個 commit 同步更新本文件的狀態表及其他受影響的 `docs/` 文件。程式變更合併前至少執行 `uv run pytest`；打包變更另需執行打包後 smoke test。
+每個階段需使用小型 Conventional Commit，並在同一個 commit 同步更新本文件的狀態表及其他受影響的 `docs/` 文件。程式變更合併前至少執行 `uv run python -m pytest`；打包變更另需執行打包後 smoke test。在會攔截未簽章命令啟動器的 Windows 環境，使用 `python -m` 可避免直接執行 `pytest.exe` 或 `streamlit.exe`。
 
 ## 目前待辦與外部前提
 

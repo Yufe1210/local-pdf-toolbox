@@ -7,17 +7,16 @@ from typing import Any, Sequence
 from uuid import uuid4
 
 import streamlit as st
-from streamlit_dnd import DropEvent, apply_move, dnd
 
 from pdf_toolbox.errors import PDFMergeError, PDFPreviewError
 from pdf_toolbox.features.merge import merge_pdfs, sanitize_output_filename
 from pdf_toolbox.pdf import inspect_pdf
 from pdf_toolbox.preview import DEFAULT_THUMBNAIL_WIDTH, render_first_page_thumbnail
+from pdf_toolbox.ui.pdf_grid import PDFGridEvent, render_pdf_grid
 
 
 MAX_PDF_FILES = 50
 MAX_TOTAL_BYTES = 500 * 1024 * 1024
-SORTABLE_CONTAINER_KEY = "pdf_sortable_cards"
 
 
 def _init_state() -> None:
@@ -98,20 +97,15 @@ def _add_uploads(uploaded_files: Sequence[Any]) -> None:
     _clear_result()
 
 
-def _move_item(index: int, direction: int) -> None:
-    target = index + direction
+def _apply_grid_event(event: PDFGridEvent) -> None:
     items = st.session_state.pdf_items
-    if 0 <= target < len(items):
-        items[index], items[target] = items[target], items[index]
-        _clear_result()
-
-
-def _apply_drop(event: DropEvent, items: list[dict[str, Any]]) -> None:
-    apply_move(event, {SORTABLE_CONTAINER_KEY: items})
-
-
-def _remove_item(index: int) -> None:
-    del st.session_state.pdf_items[index]
+    if event.action == "reorder":
+        by_id = {str(item["id"]): item for item in items}
+        st.session_state.pdf_items = [by_id[item_id] for item_id in event.ordered_ids]
+    elif event.action == "remove" and event.item_id is not None:
+        st.session_state.pdf_items = [
+            item for item in items if str(item["id"]) != event.item_id
+        ]
     st.session_state.upload_error = None
     _clear_result()
 
@@ -123,74 +117,14 @@ def _clear_all() -> None:
     _clear_result()
 
 
-def _render_pdf_card(index: int, item: dict[str, Any], item_count: int) -> None:
-    with st.container(key=f"pdf_card_{item['id']}", border=True):
-        preview_col, detail_col, up_col, down_col, remove_col = st.columns(
-            [2.2, 4.8, 0.7, 0.7, 0.7], vertical_alignment="center"
-        )
-        with preview_col:
-            if item.get("thumbnail"):
-                st.image(item["thumbnail"], width="stretch")
-            else:
-                st.caption("無法顯示預覽")
-        with detail_col:
-            st.markdown(f"**{index + 1}. {item['name']}**")
-            if item["page_count"] is not None:
-                st.caption(f"{item['page_count']} 頁 · {len(item['data']) / 1024 / 1024:.1f} MB")
-            else:
-                st.caption(f"無法讀取 · {len(item['data']) / 1024 / 1024:.1f} MB")
-        with up_col:
-            if st.button(
-                "↑",
-                key=f"up_{item['id']}",
-                disabled=index == 0,
-                help="上移",
-                use_container_width=True,
-            ):
-                _move_item(index, -1)
-                st.rerun()
-        with down_col:
-            if st.button(
-                "↓",
-                key=f"down_{item['id']}",
-                disabled=index == item_count - 1,
-                help="下移",
-                use_container_width=True,
-            ):
-                _move_item(index, 1)
-                st.rerun()
-        with remove_col:
-            if st.button(
-                "✕",
-                key=f"remove_{item['id']}",
-                help="移除",
-                use_container_width=True,
-            ):
-                _remove_item(index)
-                st.rerun()
-        if item["error"]:
-            st.error(item["error"], icon="⚠️")
-
-
 def _render_pdf_cards(items: list[dict[str, Any]]) -> None:
     st.subheader("合併順序")
-    st.caption("拖曳卡片右上角的把手調整順序，或使用 ↑／↓ 按鈕。")
-    with st.container(key=SORTABLE_CONTAINER_KEY):
-        for index, item in enumerate(list(items)):
-            _render_pdf_card(index, item, len(items))
-
-    event = dnd(
-        SORTABLE_CONTAINER_KEY,
-        cross=False,
-        handle=True,
-        handle_corner="top-right",
-        handle_icon=":material/drag_indicator:",
-        indicator="ghost",
-        key="pdf_card_order",
+    st.caption(
+        "直接拖曳卡片調整順序；欄數會隨視窗寬度變化，卡片較多時可在卡片區內捲動。"
     )
+    event = render_pdf_grid(items)
     if event:
-        _apply_drop(event, items)
-        _clear_result()
+        _apply_grid_event(event)
         st.rerun()
 
     total_size = sum(len(item["data"]) for item in items) / 1024 / 1024

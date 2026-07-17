@@ -1,26 +1,17 @@
-"""Secure, opt-in full-installer update support."""
+"""Secure update checks that direct users to a manual installer download."""
 
 from __future__ import annotations
 
-import ctypes
-import hashlib
 import json
-import os
-import re
-import tempfile
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Callable
 
 from packaging.version import InvalidVersion, Version
 
 from pdf_toolbox.config import APP_ID, APP_VERSION
 
 MAX_FEED_BYTES = 256 * 1024
-MAX_INSTALLER_BYTES = 750 * 1024 * 1024
-SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 class UpdateError(RuntimeError):
@@ -34,8 +25,6 @@ class UpdateInfo:
     version: str
     release_url: str
     release_notes: tuple[str, ...]
-    download_url: str | None = None
-    sha256: str | None = None
 
 
 def _is_secure_url(url: str) -> bool:
@@ -98,8 +87,6 @@ def check_for_update(
         remote_version = Version(version_text)
         installed_version = Version(current_version)
         release_url = str(payload["release_url"])
-        download_url = str(payload.get("download_url", "")).strip()
-        sha256 = str(payload.get("sha256", "")).lower().strip()
         notes_value = payload.get("release_notes", [])
         if not isinstance(notes_value, list):
             raise TypeError
@@ -111,168 +98,9 @@ def check_for_update(
         return None
     if not _is_secure_url(release_url):
         raise UpdateError("GitHub 下載頁面必須使用 HTTPS。")
-    if bool(download_url) != bool(sha256):
-        raise UpdateError("更新資訊的自動下載欄位不完整。")
-    if download_url and not _is_secure_url(download_url):
-        raise UpdateError("新版下載位置必須使用 HTTPS。")
-    if sha256 and not SHA256_PATTERN.fullmatch(sha256):
-        raise UpdateError("更新資訊缺少有效的 SHA-256。")
 
     return UpdateInfo(
         version=version_text,
         release_url=release_url,
         release_notes=notes,
-        download_url=download_url or None,
-        sha256=sha256 or None,
     )
-
-
-def sha256_file(path: Path) -> str:
-    """Calculate a file hash without loading the installer into memory."""
-
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def download_installer(
-    update: UpdateInfo,
-    *,
-    destination_dir: Path | None = None,
-    timeout: float = 30.0,
-    progress: Callable[[int, int | None], None] | None = None,
-) -> Path:
-    """Download and hash-check a complete installer using an atomic rename."""
-
-    if not update.download_url or not update.sha256:
-        raise UpdateError("更新資訊未提供自動下載資料。")
-
-    target_dir = destination_dir or Path(tempfile.gettempdir()) / APP_ID
-    target_dir.mkdir(parents=True, exist_ok=True)
-    final_path = target_dir / f"{APP_ID}-{update.version}-setup.exe"
-    partial_path = final_path.with_suffix(".part")
-    partial_path.unlink(missing_ok=True)
-
-    request = urllib.request.Request(
-        update.download_url,
-        headers={"User-Agent": f"{APP_ID}/{APP_VERSION}"},
-    )
-    downloaded = 0
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            _validate_final_url(
-                response,
-                update.download_url,
-                "新版下載位置重新導向到不安全位置。",
-            )
-            header = response.headers.get("Content-Length")
-            total = int(header) if header else None
-            if total is not None and total > MAX_INSTALLER_BYTES:
-                raise UpdateError("新版安裝程式超過允許大小。")
-            with partial_path.open("wb") as output:
-                while chunk := response.read(1024 * 1024):
-                    downloaded += len(chunk)
-                    if downloaded > MAX_INSTALLER_BYTES:
-                        raise UpdateError("新版安裝程式超過允許大小。")
-                    output.write(chunk)
-                    if progress:
-                        progress(downloaded, total)
-        if sha256_file(partial_path) != update.sha256:
-            raise UpdateError("新版安裝程式驗證失敗，檔案可能不完整。")
-        os.replace(partial_path, final_path)
-        return final_path
-    except UpdateError:
-        partial_path.unlink(missing_ok=True)
-        raise
-    except Exception as exc:
-        partial_path.unlink(missing_ok=True)
-        raise UpdateError("下載新版安裝程式失敗。") from exc
-
-
-def cleanup_downloaded_installers(destination_dir: Path | None = None) -> None:
-    """Best-effort cleanup of installers and partial downloads from earlier runs."""
-
-    target_dir = destination_dir or Path(tempfile.gettempdir()) / APP_ID
-    if not target_dir.is_dir():
-        return
-    for pattern in (f"{APP_ID}-*-setup.exe", f"{APP_ID}-*-setup.part"):
-        for path in target_dir.glob(pattern):
-            try:
-                path.unlink()
-            except OSError:
-                pass
-    try:
-        target_dir.rmdir()
-    except OSError:
-        pass
-
-
-def has_valid_authenticode_signature(path: Path) -> bool:
-    """Ask Windows to verify the installer's embedded Authenticode signature."""
-
-    if os.name != "nt":
-        return False
-
-    class GUID(ctypes.Structure):
-        _fields_ = [
-            ("Data1", ctypes.c_ulong),
-            ("Data2", ctypes.c_ushort),
-            ("Data3", ctypes.c_ushort),
-            ("Data4", ctypes.c_ubyte * 8),
-        ]
-
-    class WINTRUST_FILE_INFO(ctypes.Structure):
-        _fields_ = [
-            ("cbStruct", ctypes.c_ulong),
-            ("pcwszFilePath", ctypes.c_wchar_p),
-            ("hFile", ctypes.c_void_p),
-            ("pgKnownSubject", ctypes.c_void_p),
-        ]
-
-    class WINTRUST_DATA(ctypes.Structure):
-        _fields_ = [
-            ("cbStruct", ctypes.c_ulong),
-            ("pPolicyCallbackData", ctypes.c_void_p),
-            ("pSIPClientData", ctypes.c_void_p),
-            ("dwUIChoice", ctypes.c_ulong),
-            ("fdwRevocationChecks", ctypes.c_ulong),
-            ("dwUnionChoice", ctypes.c_ulong),
-            ("pFile", ctypes.POINTER(WINTRUST_FILE_INFO)),
-            ("dwStateAction", ctypes.c_ulong),
-            ("hWVTStateData", ctypes.c_void_p),
-            ("pwszURLReference", ctypes.c_wchar_p),
-            ("dwProvFlags", ctypes.c_ulong),
-            ("dwUIContext", ctypes.c_ulong),
-            ("pSignatureSettings", ctypes.c_void_p),
-        ]
-
-    action = GUID(
-        0x00AAC56B,
-        0xCD44,
-        0x11D0,
-        (ctypes.c_ubyte * 8)(0x8C, 0xC2, 0x00, 0xC0, 0x4F, 0xC2, 0x95, 0xEE),
-    )
-    file_info = WINTRUST_FILE_INFO(
-        ctypes.sizeof(WINTRUST_FILE_INFO), str(path.resolve()), None, None
-    )
-    trust_data = WINTRUST_DATA(
-        ctypes.sizeof(WINTRUST_DATA),
-        None,
-        None,
-        2,
-        0,
-        1,
-        ctypes.pointer(file_info),
-        0,
-        None,
-        None,
-        0,
-        0,
-        None,
-    )
-    result = ctypes.windll.wintrust.WinVerifyTrust(  # type: ignore[attr-defined]
-        None, ctypes.byref(action), ctypes.byref(trust_data)
-    )
-    return result == 0

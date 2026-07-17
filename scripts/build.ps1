@@ -165,12 +165,12 @@ $pdfiumLicenses = @(
     Get-ChildItem -LiteralPath $distDir -Recurse -File |
         Where-Object { $_.FullName -match "pypdfium2-.+\.dist-info.+licenses" }
 )
-$dndLicenses = @(
-    Get-ChildItem -LiteralPath $distDir -Recurse -File |
-        Where-Object { $_.FullName -match "streamlit_dnd-.+\.dist-info.+licenses" }
-)
-if ($pdfiumLicenses.Count -eq 0 -or $dndLicenses.Count -eq 0) {
-    throw "打包後缺少 pypdfium2、PDFium 或 streamlit-dnd 授權文件。"
+if ($pdfiumLicenses.Count -eq 0) {
+    throw "打包後缺少 pypdfium2 或 PDFium 授權文件。"
+}
+$gridFrontend = Join-Path $distDir "_internal\pdf_toolbox\ui\pdf_grid_frontend\index.html"
+if (-not (Test-Path -LiteralPath $gridFrontend)) {
+    throw "打包後缺少 PDF 響應式拖曳網格前端。"
 }
 Write-Host "已驗證 PDFium 與第三方授權文件均已封裝。"
 if ($signingCertificate) {

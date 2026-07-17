@@ -9,7 +9,7 @@ from pdf_toolbox.ui.merge import render_merge_page
 from pdf_toolbox.ui.shutdown_notice import render_shutdown_monitor
 
 
-st.set_page_config(page_title="本機 PDF 工具箱", page_icon="📄", layout="centered")
+st.set_page_config(page_title="本機 PDF 工具箱", page_icon="📄", layout="wide")
 render_shutdown_monitor()
 
 merge_page = st.Page(render_merge_page, title="合併 PDF", icon="🔗", url_path="merge")

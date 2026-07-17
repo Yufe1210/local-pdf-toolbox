@@ -1,10 +1,11 @@
 from io import BytesIO
+from types import SimpleNamespace
 
 from pypdf import PdfReader, PdfWriter
 from streamlit.testing.v1 import AppTest
-from streamlit_dnd import DropEvent
 
 from pdf_toolbox.ui import merge as merge_ui
+from pdf_toolbox.ui.pdf_grid import PDFGridEvent
 from pdf_toolbox.ui.shutdown_notice import SHUTDOWN_MONITOR_HTML
 
 
@@ -32,12 +33,6 @@ def merge_page_with_items(items: list[dict[str, object]]) -> AppTest:
     return app.run(timeout=10)
 
 
-def button_with_key(app: AppTest, key: str):
-    matches = [button for button in app.button if button.key == key]
-    assert len(matches) == 1
-    return matches[0]
-
-
 def test_home_page_and_merge_navigation() -> None:
     app = AppTest.from_file("app.py").run(timeout=10)
 
@@ -51,8 +46,9 @@ def test_home_page_and_merge_navigation() -> None:
 
     assert not app.exception
     assert [title.value for title in app.title] == ["合併 PDF"]
-    assert app.button[0].label == "合併 PDF"
-    assert app.button[0].disabled
+    merge_buttons = [button for button in app.button if button.label == "合併 PDF"]
+    assert len(merge_buttons) == 1
+    assert merge_buttons[0].disabled
 
 
 def test_browser_shutdown_monitor_waits_for_health_then_shows_closed_state() -> None:
@@ -80,16 +76,9 @@ def test_shutdown_monitor_uses_current_non_iframe_streamlit_api(monkeypatch) -> 
     assert calls == [(SHUTDOWN_MONITOR_HTML, True)]
 
 
-def test_merge_page_reorders_and_merges_in_display_order() -> None:
+def test_merge_page_merges_in_display_order() -> None:
     app = merge_page_with_items(
         [
-            {
-                "id": "first",
-                "name": "文件.pdf",
-                "data": make_pdf(100, 200),
-                "page_count": 1,
-                "error": None,
-            },
             {
                 "id": "second",
                 "name": "文件.pdf",
@@ -97,12 +86,16 @@ def test_merge_page_reorders_and_merges_in_display_order() -> None:
                 "page_count": 1,
                 "error": None,
             },
+            {
+                "id": "first",
+                "name": "文件.pdf",
+                "data": make_pdf(100, 200),
+                "page_count": 1,
+                "error": None,
+            },
         ]
     )
 
-    button_with_key(app, "down_first").click().run(timeout=10)
-
-    assert [item.value for item in app.markdown] == ["**1. 文件.pdf**", "**2. 文件.pdf**"]
     assert [item["id"] for item in app.session_state["pdf_items"]] == ["second", "first"]
 
     app.text_input[0].set_value("合併結果")
@@ -121,20 +114,31 @@ def test_merge_page_reorders_and_merges_in_display_order() -> None:
     assert app.download_button[0].label == "下載合併後的 PDF"
 
 
-def test_merge_page_remove_and_clear_all() -> None:
+def test_grid_remove_event_and_clear_all(monkeypatch) -> None:
+    state = SimpleNamespace(
+        pdf_items=[
+            {"id": "first", "data": b"1"},
+            {"id": "second", "data": b"2"},
+            {"id": "third", "data": b"3"},
+        ],
+        upload_error="old error",
+        merged_result={"data": b"old"},
+    )
+    monkeypatch.setattr(merge_ui.st, "session_state", state)
+
+    merge_ui._apply_grid_event(PDFGridEvent(action="remove", item_id="second"))
+
+    assert [item["id"] for item in state.pdf_items] == ["first", "third"]
+    assert state.upload_error is None
+    assert state.merged_result is None
+    monkeypatch.undo()
+
     app = merge_page_with_items(
         [
             {
                 "id": "first",
                 "name": "第一.pdf",
                 "data": make_pdf(100, 200),
-                "page_count": 1,
-                "error": None,
-            },
-            {
-                "id": "second",
-                "name": "第二.pdf",
-                "data": make_pdf(200, 300),
                 "page_count": 1,
                 "error": None,
             },
@@ -147,13 +151,6 @@ def test_merge_page_remove_and_clear_all() -> None:
             },
         ]
     )
-
-    button_with_key(app, "remove_second").click().run(timeout=10)
-
-    assert [item["name"] for item in app.session_state["pdf_items"]] == [
-        "第一.pdf",
-        "第三.pdf",
-    ]
 
     clear_buttons = [button for button in app.button if button.label == "清除全部"]
     assert len(clear_buttons) == 1
@@ -196,16 +193,23 @@ def test_invalid_pdf_item_has_no_thumbnail_and_disables_partial_work() -> None:
     assert "不是有效的 PDF" in item["error"]
 
 
-def test_drag_event_reorders_the_same_list_used_for_merging() -> None:
-    items = [{"id": "first"}, {"id": "second"}, {"id": "third"}]
-    event = DropEvent(
-        from_container=merge_ui.SORTABLE_CONTAINER_KEY,
-        to_container=merge_ui.SORTABLE_CONTAINER_KEY,
-        item_key="pdf_card_first",
-        from_index=0,
-        to_index=3,
+def test_grid_event_reorders_the_same_list_used_for_merging(monkeypatch) -> None:
+    state = SimpleNamespace(
+        pdf_items=[
+            {"id": "first"},
+            {"id": "second"},
+            {"id": "third"},
+        ],
+        upload_error=None,
+        merged_result={"data": b"old"},
+    )
+    monkeypatch.setattr(merge_ui.st, "session_state", state)
+    event = PDFGridEvent(
+        action="reorder",
+        ordered_ids=("second", "third", "first"),
     )
 
-    merge_ui._apply_drop(event, items)
+    merge_ui._apply_grid_event(event)
 
-    assert [item["id"] for item in items] == ["second", "third", "first"]
+    assert [item["id"] for item in state.pdf_items] == ["second", "third", "first"]
+    assert state.merged_result is None

@@ -86,16 +86,16 @@ def test_all_toolbox_modules_are_explicit_packaging_inputs() -> None:
     assert "打包後缺少必要模組" in build_script
 
 
-def test_preview_runtime_and_license_files_are_packaged() -> None:
+def test_preview_runtime_and_grid_frontend_are_packaged() -> None:
     spec = (ROOT / "packaging" / "pdf_toolbox.spec").read_text(encoding="utf-8")
     build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8-sig")
 
     assert 'collect_all("pypdfium2")' in spec
     assert 'collect_all("pypdfium2_raw")' in spec
-    assert 'collect_all("streamlit_dnd")' in spec
     assert 'copy_metadata("pypdfium2")' in spec
-    assert 'copy_metadata("streamlit-dnd")' in spec
+    assert "pdf_grid_frontend" in spec
     assert "打包後缺少 PDFium 原生程式庫" in build_script
+    assert "打包後缺少 PDF 響應式拖曳網格前端" in build_script
     assert "第三方授權文件" in build_script
 
 

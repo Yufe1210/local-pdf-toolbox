@@ -10,5 +10,6 @@ pdf_toolbox.self_test
 pdf_toolbox.ui
 pdf_toolbox.ui.home
 pdf_toolbox.ui.merge
+pdf_toolbox.ui.pdf_grid
 pdf_toolbox.ui.shutdown_notice
 pdf_toolbox.updater

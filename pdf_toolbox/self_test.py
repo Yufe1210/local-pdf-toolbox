@@ -62,9 +62,8 @@ def _run_streamlit_pages(pdf_data: bytes, thumbnail: bytes) -> None:
         raise RuntimeError(f"合併介面執行失敗：{app.exception[0].message}")
     if [title.value for title in app.title] != ["合併 PDF"]:
         raise RuntimeError("合併介面標題不符。")
-    card_names = [item.value for item in app.markdown if "自我檢查.pdf" in item.value]
-    if len(card_names) != 2:
-        raise RuntimeError("合併介面未建立兩張 PDF 卡片。")
+    if len(app.session_state["pdf_items"]) != 2:
+        raise RuntimeError("合併介面未保留兩份 PDF。")
     merge_buttons = [button for button in app.button if button.label == "合併 PDF"]
     if len(merge_buttons) != 1 or merge_buttons[0].disabled:
         raise RuntimeError("合併介面未進入可合併狀態。")
@@ -76,10 +75,20 @@ def run_self_test() -> tuple[str, ...]:
     from pdf_toolbox.features.merge import merge_pdfs
     from pdf_toolbox.pdf import inspect_pdf
     from pdf_toolbox.preview import render_first_page_thumbnail
-    from streamlit_dnd import dnd
+    from pdf_toolbox.ui.pdf_grid import PDF_GRID_FRONTEND, render_pdf_grid
 
-    if not callable(dnd):
-        raise RuntimeError("拖曳元件無法載入。")
+    if not callable(render_pdf_grid):
+        raise RuntimeError("PDF 網格元件無法載入。")
+    frontend_files = {
+        path.name for path in PDF_GRID_FRONTEND.iterdir() if path.is_file()
+    }
+    if frontend_files != {
+        "index.html",
+        "main.js",
+        "streamlit-protocol.js",
+        "styles.css",
+    }:
+        raise RuntimeError("PDF 網格前端檔案不完整。")
 
     pdf_data = _representative_pdf()
     source = BytesIO(pdf_data)
@@ -114,7 +123,7 @@ def run_self_test() -> tuple[str, ...]:
 
     return (
         "首頁與合併介面",
-        "PDF 卡片與拖曳元件",
+        "PDF 響應式拖曳網格",
         "PDF 驗證",
         "PDFium 第一頁預覽",
         "PDF 合併",

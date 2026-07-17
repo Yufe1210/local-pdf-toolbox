@@ -2,7 +2,7 @@
 
 ## 打包與安裝
 
-PyInstaller 負責把啟動器、Python 解譯器、Streamlit、pypdf、預覽用 pypdfium2／PDFium、拖曳元件及應用程式模組整理成 `onedir`。Inno Setup 再把整個資料夾壓縮成單一安裝程式。建置腳本會確認 PDFium 原生 DLL 與 pypdfium2／streamlit-dnd 發行授權文件都已收集，缺少時立即失敗。
+PyInstaller 負責把啟動器、Python 解譯器、Streamlit、pypdf、預覽用 pypdfium2／PDFium、專案內離線拖曳網格前端及應用程式模組整理成 `onedir`。Inno Setup 再把整個資料夾壓縮成單一安裝程式。建置腳本會確認 PDFium 原生 DLL、pypdfium2 發行授權文件及拖曳網格前端都已收集，缺少時立即失敗。
 
 ```mermaid
 flowchart LR
@@ -15,7 +15,7 @@ flowchart LR
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
 
-`app.py` 由 Streamlit 在執行階段載入，PyInstaller 不一定能從啟動器自動推導其匯入。所有自家必要模組因此明確記錄於 `packaging/required_toolbox_modules.txt`；每次 PyInstaller 建置後，`scripts/build.ps1` 會核對 `PYZ-00.toc`，缺少任一模組就停止，不產生可交付候選檔。Streamlit 的 `/_stcore/health` 只能證明服務程序存活，不能單獨證明頁面程式已成功匯入。封裝後 `--self-test` 因此會以 Streamlit 測試執行器實際跑過首頁、合併頁、兩張 PDF 卡片與拖曳元件後端；乾淨 Windows 驗收仍必須在一般瀏覽器實際檢查畫面與滑鼠拖曳。
+`app.py` 由 Streamlit 在執行階段載入，PyInstaller 不一定能從啟動器自動推導其匯入。所有自家必要模組因此明確記錄於 `packaging/required_toolbox_modules.txt`；每次 PyInstaller 建置後，`scripts/build.ps1` 會核對 `PYZ-00.toc`，缺少任一模組就停止，不產生可交付候選檔。Streamlit 的 `/_stcore/health` 只能證明服務程序存活，不能單獨證明頁面程式已成功匯入。封裝後 `--self-test` 因此會以 Streamlit 測試執行器實際跑過首頁、合併頁、兩張 PDF 卡片與專案內拖曳網格後端，並確認四個離線前端檔案存在；乾淨 Windows 驗收仍必須在一般瀏覽器實際檢查畫面與滑鼠拖曳。
 
 安裝完成頁不自動啟動工具或開啟瀏覽器。安裝者關閉精靈後，再從桌面或開始功能表捷徑啟動。
 
@@ -58,9 +58,9 @@ flowchart LR
   -InteractiveGuiCheck
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳元件後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、離線拖曳網格、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳網格後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。
 
-加入 `-InteractiveGuiCheck` 後，腳本會在服務驗證完成後暫停，列出首頁、預覽、中文與重複檔名、滑鼠拖曳、按鈕排序、合併下載、更新入口等檢查項目，只有輸入大寫 `PASS` 才會繼續。腳本正常關閉服務後會再次暫停，要求確認原瀏覽器分頁已顯示工具關閉狀態，之後才解除安裝。省略此參數時仍可執行無人值守的安裝生命週期檢查。
+加入 `-InteractiveGuiCheck` 後，腳本會在服務驗證完成後暫停，列出首頁、預覽、中文與重複檔名、響應式多欄與跨列拖曳、合併下載、更新入口等檢查項目，只有輸入大寫 `PASS` 才會繼續。腳本正常關閉服務後會再次暫停，要求確認原瀏覽器分頁已顯示工具關閉狀態，之後才解除安裝。省略此參數時仍可執行無人值守的安裝生命週期檢查。
 
 `-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
@@ -84,6 +84,8 @@ flowchart LR
 3. 顯示版本、更新說明與「前往 GitHub 下載頁面」。
 4. 使用者同意後以預設瀏覽器開啟 GitHub Releases；程式本身不下載或執行安裝程式。
 5. 使用者自行下載完整新版安裝程式、關閉舊版並執行覆蓋安裝。
+
+啟動後的自動檢查同一天至多一次；啟動器上的「檢查更新」按鈕不受此限制，可隨時重新檢查。只有 feed 版本高於已安裝版本才顯示提示，因此目前 feed 與程式同為 `0.1.0` 時不會出現更新通知。固定 `AppId` 與安裝位置使新版直接更新既有安裝，不會建立第二份程式；使用者不必先解除安裝。瀏覽器下載資料夾中的舊安裝程式不屬於應用程式安裝內容，工具不會擅自刪除，使用者確認新版可用後可自行刪除。
 
 版本資訊至少包含：
 
@@ -116,7 +118,7 @@ flowchart LR
 - 建立乾淨的 PyInstaller onedir。
 - 核對 `packaging/required_toolbox_modules.txt` 中的模組均存在於 PyInstaller 模組清單。
 - 預覽功能加入後，核對 pypdfium2、PDFium 原生元件及必要授權文件均存在於 onedir 與安裝程式。
-- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、兩張 PDF 卡片、拖曳元件後端、預覽模組與代表性第一頁渲染。
+- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、兩張 PDF 卡片、專案內拖曳網格後端與離線前端資源、預覽模組及代表性第一頁渲染。
 - 測試打包後啟動、實際載入首頁與合併頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
 - 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。

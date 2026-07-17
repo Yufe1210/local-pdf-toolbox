@@ -112,12 +112,9 @@ try {
         Get-ChildItem -LiteralPath $InstallDir -Recurse -File |
             Where-Object { $_.FullName -match "pypdfium2-.+\.dist-info.+licenses" }
     )
-    $dndLicenses = @(
-        Get-ChildItem -LiteralPath $InstallDir -Recurse -File |
-            Where-Object { $_.FullName -match "streamlit_dnd-.+\.dist-info.+licenses" }
-    )
-    if (-not $pdfiumDll -or $pdfiumLicenses.Count -eq 0 -or $dndLicenses.Count -eq 0) {
-        throw "安裝內容缺少 PDFium 或第三方授權文件。"
+    $gridFrontend = Join-Path $InstallDir "_internal\pdf_toolbox\ui\pdf_grid_frontend\index.html"
+    if (-not $pdfiumDll -or $pdfiumLicenses.Count -eq 0 -or -not (Test-Path -LiteralPath $gridFrontend)) {
+        throw "安裝內容缺少 PDFium、第三方授權文件或 PDF 響應式拖曳網格。"
     }
 
     Write-Host "[4/8] 執行安裝版自我檢查"
@@ -166,7 +163,7 @@ try {
         Write-Host "  1. 啟動器視窗可見，瀏覽器自動開啟首頁，且沒有命令列視窗。"
         Write-Host "  2. 進入合併 PDF，加入至少兩份 PDF；上傳元件加入後清空，卡片清單保持正確。"
         Write-Host "  3. 中文及重複檔名、頁數與第一頁縮圖均正確，直向／橫向／旋轉方向正常。"
-        Write-Host "  4. 滑鼠拖曳、上移、下移、移除與清除全部均會同步更新同一份清單。"
+        Write-Host "  4. 在多欄網格中跨列拖曳、移除與清除全部均會同步更新同一份清單。"
         Write-Host "  5. 依畫面順序合併，下載檔名、總頁數、頁面尺寸、方向及內容正確。"
         Write-Host "  6. 啟動器的重新開啟介面與檢查更新操作正常；離線時 PDF 功能不受影響。"
         Write-Host "請先不要自行關閉啟動器；腳本下一步會正常關閉它。"

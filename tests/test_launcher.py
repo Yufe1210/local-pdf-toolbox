@@ -31,7 +31,7 @@ def test_installed_self_test_covers_ui_preview_and_merge(monkeypatch, tmp_path: 
     log = (tmp_path / "self-test.log").read_text(encoding="utf-8")
     assert "SELF-TEST OK" in log
     assert "首頁與合併介面" in log
-    assert "PDF 卡片與拖曳元件" in log
+    assert "PDF 響應式拖曳網格" in log
     assert "PDFium 第一頁預覽" in log
     assert "PDF 合併" in log
 
@@ -165,3 +165,34 @@ def test_new_version_opens_github_release_page(monkeypatch) -> None:
 
     assert "不會自動安裝更新" in prompts[0]
     assert opened == [(update.release_url, 2)]
+
+
+def test_automatic_update_check_runs_at_most_once_per_day(tmp_path: Path) -> None:
+    checks: list[bool] = []
+    window = object.__new__(launcher.LauncherWindow)
+    window.config = LauncherConfig(
+        update_feed_url="https://updates.example.test/feed.json"
+    )
+    window.update_state_path = tmp_path / "update-state.json"
+    window._start_update_check = lambda *, show_no_update: checks.append(show_no_update)
+
+    window._check_updates_automatically()
+    window._record_check()
+    window._check_updates_automatically()
+
+    assert checks == [False]
+
+
+def test_manual_update_button_can_check_again_on_the_same_day(tmp_path: Path) -> None:
+    checks: list[bool] = []
+    window = object.__new__(launcher.LauncherWindow)
+    window.config = LauncherConfig(
+        update_feed_url="https://updates.example.test/feed.json"
+    )
+    window.update_state_path = tmp_path / "update-state.json"
+    window._start_update_check = lambda *, show_no_update: checks.append(show_no_update)
+    window._record_check()
+
+    window.check_updates_manually()
+
+    assert checks == [True]

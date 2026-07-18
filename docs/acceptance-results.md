@@ -19,7 +19,7 @@
 | 只監聽 loopback | 通過 | 原始碼服務實測與啟動器設定測試均為 `127.0.0.1` |
 | 啟動器結束子程序 | 通過 | 正常關閉、runtime 清理及子程序終止測試 |
 | 更新提示安全 | 通過 | HTTPS、重新導向、版本比較、每日自動檢查、同日手動重新檢查及 GitHub Release 開啟測試；程式不含自動下載或執行流程 |
-| 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
+| 公開 GitHub repository、Release 與更新資訊 | 通過 | `main`、`v0.1.0`、latest GitHub Release、兩個下載資產與 raw `updates/update.json` 均已公開驗證 |
 | PyInstaller onedir | 通過 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 15 個必要模組全數存在，PDFium DLL、pypdfium2 授權檔與四個離線拖曳網格前端檔案均存在；外部 Windows 安裝版可正常操作 |
 | 安裝版 `--self-test` | 最終 onedir 通過 | 實際執行封裝內首頁與合併頁、建立兩張重複中文檔名 PDF 卡片、載入自訂拖曳網格後端並核對離線前端資源，完成代表性 PDF 驗證、PDFium 縮圖與二頁合併 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
@@ -67,7 +67,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 本機執行證據：加入實際桌面捷徑與互動 GUI 驗收流程後，再次執行 `-ReleaseBuild` 且未略過任何步驟；強化版 `--self-test` 實際執行封裝內首頁、合併頁、兩張卡片與舊拖曳元件後端，封裝後 loopback smoke test 亦通過且只監聽 `127.0.0.1`
 - 限制：此候選檔不再代表目前原始碼，不得上傳 GitHub Release
 
-2026-07-17 純拖曳響應式多欄網格候選檔已完成未略過步驟的完整編譯，並於 2026-07-19 由使用者完成外部 Windows 人工驗收：
+2026-07-17 純拖曳響應式多欄網格候選檔已完成未略過步驟的完整編譯，於 2026-07-19 由使用者完成外部 Windows 人工驗收，並發布為 `v0.1.0`：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
 - 大小：65,743,796 bytes（約 62.70 MiB）
@@ -80,10 +80,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 本機封裝證據：`-ReleaseBuild` 未略過任何步驟；最終 onedir 的 `--self-test`、拖曳網格資源核對及 loopback smoke test 通過，且服務只監聽 `127.0.0.1`
 - 外部 Windows 驗收：離線安裝、安裝後不自動啟動、桌面捷徑、啟動器、瀏覽器介面、PDF 預覽與拖曳、合併下載、更新入口、服務結束、背景程序及解除安裝均正常
 - 已接受行為：結束後原瀏覽器分頁未顯示指定的「本機 PDF 工具箱已關閉」文字，但可清楚辨識服務已停止；0.1.0 不為此延後發布
+- GitHub Release：<https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.1.0>
+- 公開資產：`LocalPDFToolbox-Setup-v0.1.0.exe` 與 `LocalPDFToolbox-Setup-v0.1.0.exe.sha256`
+- 發布後核對：從 GitHub 重新下載的安裝程式為 65,743,796 bytes，SHA-256 仍為 `64580daddbb96b06dad5dcb9f86fa17096f08a58f11901d60b573e61488fcb6d`
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
 
-## 正式發布前尚待驗證
+## 已接受風險與後續驗證
 
 | 驗收項目 | 狀態 | 尚缺條件 |
 | --- | --- | --- |

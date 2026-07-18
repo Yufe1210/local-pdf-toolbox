@@ -108,7 +108,19 @@ flowchart LR
 - `main`：原始碼、`uv.lock`、文件、測試與建置腳本。
 - `updates/update.json`：啟動器讀取的版本資訊；發布新版安裝程式後才更新。
 - Git tags：`v0.1.0`、`v0.2.0` 等對應原始碼版本。
-- GitHub Releases：保存每個版本的完整 `本機PDF工具箱-安裝程式.exe` 與 SHA-256，不將二進位檔提交到 Git 歷史。
+- GitHub Releases：保存每個版本的完整安裝程式與 SHA-256，不將二進位檔提交到 Git 歷史。公開資產採 `LocalPDFToolbox-Setup-v版本.exe` 命名，避免 GitHub 清理全中文資產名稱。
+
+## 已發布版本
+
+### 0.1.0
+
+- 發布日期：2026-07-19。
+- tag：`v0.1.0`，指向 commit `48a78d841626a8fd050eccf4feafc56cab922cbe`。
+- Release：<https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.1.0>。
+- 安裝程式：`LocalPDFToolbox-Setup-v0.1.0.exe`，65,743,796 bytes。
+- SHA-256：`64580daddbb96b06dad5dcb9f86fa17096f08a58f11901d60b573e61488fcb6d`。
+- 狀態：一般 GitHub Release、`latest`、非 draft、非 Pre-release；標題與說明明確標示未簽章公開測試版。
+- 發布後驗證：兩個資產已從 GitHub 重新下載，檔名、大小、SHA-256 清單與安裝程式雜湊均正確；公開 `updates/update.json` 為 0.1.0 並指向 `/releases/latest`。
 
 ## 發布檢查清單
 

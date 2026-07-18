@@ -2,7 +2,7 @@
 
 這是一個以 Streamlit、pypdf 與 pypdfium2 製作的本機 PDF 工具箱。目前可以檢查每份 PDF 的第一頁預覽，在響應式多欄卡片中直接拖曳排序、合併並下載結果；所有 PDF 都只在程式記憶體中處理。
 
-目前完成合併 PDF、工具箱架構、桌面啟動器及離線安裝建置腳本，0.1.0 候選檔也已完成外部 Windows 人工驗收。0.1.0 採未簽章公開測試版，程式會提示新版並開啟 GitHub Releases，由使用者手動下載更新。拆分 PDF 預計在 0.2.0 開發。詳細資訊請參閱 [專案文件](docs/README.md)。
+目前完成合併 PDF、工具箱架構、桌面啟動器及離線安裝，並已發布 [0.1.0 未簽章公開測試版](https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.1.0)。程式會提示新版並開啟 GitHub Releases，由使用者手動下載更新。拆分 PDF 預計在 0.2.0 開發。詳細資訊請參閱 [專案文件](docs/README.md)。
 
 ## 環境需求
 

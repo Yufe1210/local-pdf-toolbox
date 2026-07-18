@@ -53,7 +53,7 @@ uv run python -m streamlit run app.py
 公開 GitHub repository 與 HTTPS 更新資訊已完成並驗證。後續待辦為：
 
 1. **已完成**：未簽章 0.1.0 候選檔已在外部 Windows 環境完成離線安裝、雙擊啟動、合併、更新入口、結束及解除安裝人工驗收。
-2. 將已驗收的功能分支合併至 `main` 並推送 GitHub。
+2. **已完成**：已驗收的功能分支已合併至 `main`。
 3. 準備 `v0.1.0` tag 與 GitHub Release；上傳完整安裝程式及 SHA-256，Release 說明必須揭露未簽章風險。
 4. 發布 0.1.0 後再開發拆分 PDF，並以 0.2.0 驗證更新提示、GitHub 下載及手動覆蓋安裝流程。
 

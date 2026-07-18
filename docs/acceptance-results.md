@@ -1,6 +1,6 @@
 # 0.1.0 驗收紀錄
 
-> 更新日期：2026-07-17
+> 更新日期：2026-07-19
 >
 > 本文件記錄實際執行結果；產品需求仍以 `requirements.md` 為準。
 
@@ -14,13 +14,13 @@
 | 空白、損壞、非 PDF、加密及少於兩份 | 通過 | 核心拒絕測試，錯誤不產生部分結果 |
 | 首頁與合併介面 | 通過 | 本機瀏覽器檢查首頁、導覽、版本、中文命名與停用狀態 |
 | 排序、移除、清除、合併及下載狀態 | 通過 | Streamlit 應用測試以真實 PDF bytes 驗證完整狀態流程 |
-| 單一上傳狀態、響應式卡片及拖曳事件 | 本機通過、安裝版待驗收 | 上傳器重設、唯一 ID、重複中文檔名、純拖曳排序與移除均使用同一 `pdf_items`；六份 PDF 已在一般瀏覽器完成跨列拖曳、移除與合併 |
+| 單一上傳狀態、響應式卡片及拖曳事件 | 通過 | 上傳器重設、唯一 ID、重複中文檔名、純拖曳排序與移除均使用同一 `pdf_items`；本機及外部 Windows 安裝版人工驗收均正常 |
 | 第一頁縮圖、旋轉及記憶體保護 | 通過 | PDFium 直向、旋轉與極端長頁測試；220 × 400 像素上限、50 份／500 MB 邊界及成功／失敗路徑資源釋放測試 |
 | 只監聽 loopback | 通過 | 原始碼服務實測與啟動器設定測試均為 `127.0.0.1` |
 | 啟動器結束子程序 | 通過 | 正常關閉、runtime 清理及子程序終止測試 |
 | 更新提示安全 | 通過 | HTTPS、重新導向、版本比較、每日自動檢查、同日手動重新檢查及 GitHub Release 開啟測試；程式不含自動下載或執行流程 |
 | 公開 GitHub repository 與更新資訊 | 通過 | `Yufe1210/local-pdf-toolbox` 為 Public、`main` 已推送，raw `updates/update.json` 回傳 HTTP 200 |
-| PyInstaller onedir | 建置通過、安裝版 GUI 待驗收 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 15 個必要模組全數存在，PDFium DLL、pypdfium2 授權檔與四個離線拖曳網格前端檔案均存在 |
+| PyInstaller onedir | 通過 | Python 3.13.14 建置成功；`PYZ-00.toc` 中 15 個必要模組全數存在，PDFium DLL、pypdfium2 授權檔與四個離線拖曳網格前端檔案均存在；外部 Windows 安裝版可正常操作 |
 | 安裝版 `--self-test` | 最終 onedir 通過 | 實際執行封裝內首頁與合併頁、建立兩張重複中文檔名 PDF 卡片、載入自訂拖曳網格後端並核對離線前端資源，完成代表性 PDF 驗證、PDFium 縮圖與二頁合併 |
 | Inno Setup 單一離線安裝包 | 通過 | 繁體中文 installer 成功編譯，未使用 `external` 或 `download` flags |
 | 安裝後不自動啟動 | 通過 | installer 不含 `[Run]`／`postinstall`，仍建立桌面與開始功能表捷徑 |
@@ -67,7 +67,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 本機執行證據：加入實際桌面捷徑與互動 GUI 驗收流程後，再次執行 `-ReleaseBuild` 且未略過任何步驟；強化版 `--self-test` 實際執行封裝內首頁、合併頁、兩張卡片與舊拖曳元件後端，封裝後 loopback smoke test 亦通過且只監聽 `127.0.0.1`
 - 限制：此候選檔不再代表目前原始碼，不得上傳 GitHub Release
 
-2026-07-17 純拖曳響應式多欄網格候選檔已完成未略過步驟的完整編譯，但仍不得在乾淨 Windows 驗收前上傳 Release：
+2026-07-17 純拖曳響應式多欄網格候選檔已完成未略過步驟的完整編譯，並於 2026-07-19 由使用者完成外部 Windows 人工驗收：
 
 - 檔名：`本機PDF工具箱-安裝程式.exe`
 - 大小：65,743,796 bytes（約 62.70 MiB）
@@ -78,7 +78,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 封裝核對：15 個自家模組、`pdfium.dll`、pypdfium2／PDFium 完整 BUILD_LICENSES，以及自訂拖曳網格的 HTML、JavaScript、CSS 與 Streamlit protocol 檔案
 - 本機 GUI 證據：六份直向／橫向代表性 PDF 於一般瀏覽器顯示第一頁縮圖；預設寬度四欄、640 像素寬度兩欄，跨列拖曳後順序、移除、六頁合併及下載狀態正確
 - 本機封裝證據：`-ReleaseBuild` 未略過任何步驟；最終 onedir 的 `--self-test`、拖曳網格資源核對及 loopback smoke test 通過，且服務只監聽 `127.0.0.1`
-- 限制：尚未在無 Python 的乾淨 Windows 安裝、由捷徑實際操作 GUI 並解除安裝，不得上傳 GitHub Release
+- 外部 Windows 驗收：離線安裝、安裝後不自動啟動、桌面捷徑、啟動器、瀏覽器介面、PDF 預覽與拖曳、合併下載、更新入口、服務結束、背景程序及解除安裝均正常
+- 已接受行為：結束後原瀏覽器分頁未顯示指定的「本機 PDF 工具箱已關閉」文字，但可清楚辨識服務已停止；0.1.0 不為此延後發布
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
 
@@ -88,11 +89,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | --- | --- | --- |
 | 正式 Authenticode 簽章 | 延後 | 0.1.0 已決定採未簽章公開測試版；未來恢復自動更新或擴大發布前再取得 |
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
-| 最新候選檔封裝後 smoke test | 本機通過、乾淨環境待處理 | 最新完整建置未使用略過參數；最終 onedir 的強化版 `--self-test`、健康檢查與 loopback 監聽通過，仍需在無 Python 電腦重跑安裝版驗收 |
-| 無 Python 電腦離線安裝 | 待處理 | 目前主機未安裝 Windows Sandbox，也沒有可用的既存 Windows VM |
-| 捷徑雙擊、GUI、拖曳、關閉頁面及無背景程序 | 待處理 | 本機已存在既有安裝，驗收腳本為避免覆蓋而會中止；需在乾淨 Windows 執行 `scripts/verify-release.ps1 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck`，腳本會由實際桌面捷徑啟動，並在 GUI 操作與關閉頁面兩處等待人工輸入 `PASS` |
-| 解除安裝與資料清理 | 待處理 | 需在同一乾淨 Windows 環境完成驗收腳本 |
-| Windows 10／11 x64 相容性 | 待處理 | 至少各使用一個目標版本驗收 |
+| 最新候選檔封裝後 smoke test | 通過 | 完整建置未使用略過參數；最終 onedir 的 `--self-test`、健康檢查、loopback 監聽及外部 Windows 安裝版操作均通過 |
+| 無 Python 電腦離線安裝 | 通過 | 使用者回報外部 Windows 環境的安裝與日常操作皆正常 |
+| 捷徑雙擊、GUI、拖曳、結束狀態及無背景程序 | 通過 | 桌面捷徑啟動、PDF 預覽與跨列拖曳、合併下載、啟動器結束及背景程序檢查正常；瀏覽器可辨識服務已停止，不要求指定關閉文字 |
+| 解除安裝與資料清理 | 通過 | 使用者完成解除安裝檢查，未回報異常 |
+| Windows 10／11 x64 相容性 | 部分確認 | 外部 Windows 驗收通過；本次回報未記錄確切 Windows 版本，未宣稱 Windows 10 與 11 已各自驗收 |
 | 0.1.0 更新至後續版本 | 待處理 | 待下一個版本驗證提示、GitHub 下載與手動覆蓋安裝 |
 
 ## 目前主機限制

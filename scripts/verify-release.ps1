@@ -179,10 +179,10 @@ try {
 
     if ($InteractiveGuiCheck) {
         Write-Host ""
-        Write-Host "請回到原本的瀏覽器分頁，確認它顯示「本機 PDF 工具箱已關閉」，且啟動器視窗已消失。" -ForegroundColor Cyan
+        Write-Host "請回到原本的瀏覽器分頁，確認可清楚辨識服務已停止或無法繼續操作，且啟動器視窗已消失；不要求顯示指定文字。" -ForegroundColor Cyan
         $shutdownResult = (Read-Host "確認通過後輸入 PASS；輸入其他內容會中止驗收").Trim()
         if ($shutdownResult -cne "PASS") {
-            throw "關閉頁面人工驗收未確認通過。"
+            throw "服務停止狀態人工驗收未確認通過。"
         }
     }
 

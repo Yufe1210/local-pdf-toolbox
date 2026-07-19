@@ -247,10 +247,10 @@ if (-not $iscc) {
 
 $releaseDir = Join-Path $Root "release"
 $outputBaseName = if ($ReleaseBuild) {
-    "本機PDF工具箱-安裝程式"
+    "LocalPDFToolbox-Setup-v$version"
 }
 else {
-    "本機PDF工具箱-安裝程式-未簽章測試版"
+    "LocalPDFToolbox-Setup-v$version-unsigned-test"
 }
 & $iscc "/DMyAppVersion=$version" "/DSourceDir=$distDir" "/DOutputDir=$releaseDir" "/DOutputBaseName=$outputBaseName" packaging\installer.iss
 if ($LASTEXITCODE -ne 0) {

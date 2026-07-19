@@ -19,7 +19,7 @@
 | 工具箱模組化 | 已完成 | 首頁、共用驗證、合併功能與介面已拆分 |
 | 桌面啟動器 | 已完成 | 單一執行個體、動態連接埠、自動開啟瀏覽器、重新開啟介面、結束控制與 GitHub 手動更新入口均通過外部 Windows 人工驗收 |
 | PyInstaller onedir | 已完成 | 0.2.0 以 Python 3.13.14 建置成功並核對 18 個必要模組、自訂拖曳網格前端、PDFium DLL 及授權檔；完整建置通過新功能 `--self-test` 與 loopback smoke test；0.1.0 另已通過外部 Windows 安裝驗收 |
-| Inno Setup 安裝程式 | 已完成 | 含響應式拖曳網格的未簽章安裝程式已完成 per-user 離線安裝、捷徑、操作與解除安裝驗收，並發布於 GitHub Release |
+| Inno Setup 安裝程式 | 已完成 | 安裝程式與 SHA-256 採版本化檔名，避免新版本覆蓋舊版本；0.1.0 已完成 per-user 離線安裝、捷徑、操作與解除安裝驗收並發布 |
 | 發布驗收腳本 | 已完成 | 已涵蓋安裝後未自動啟動、安裝版 `--self-test`、PDFium／授權檔、桌面捷徑啟動、互動 GUI、服務、loopback、背景程序及解除安裝檢查；關閉頁面只要求可辨識服務已停止 |
 | 無 Python 電腦驗證 | 已完成 | 使用者回報外部 Windows 環境的安裝、啟動、操作及解除安裝檢查皆正常 |
 | 更新機制 | 進行中 | 已改為 HTTPS 檢查版本並開啟 GitHub Releases 手動下載；待 0.1.0 → 0.2.0 提示及覆蓋安裝驗證 |
@@ -108,7 +108,7 @@ flowchart TD
 - 安裝到使用者範圍，建立捷徑與解除安裝資訊。
 - 安裝完成頁不得預設啟動工具；使用者之後從捷徑啟動。
 - 建立可重複執行的 `scripts/build.ps1`。
-- 最終輸出為 `release/本機PDF工具箱-安裝程式.exe`，安裝時不得下載額外內容。
+- 正式候選輸出為 `release/LocalPDFToolbox-Setup-v版本.exe`，一般測試輸出為 `release/LocalPDFToolbox-Setup-v版本-unsigned-test.exe`，兩者各自產生同名 `.sha256`；不同版本共存且不得互相覆蓋，安裝時不得下載額外內容。
 
 ### 4. 合併介面預覽與驗收強化
 

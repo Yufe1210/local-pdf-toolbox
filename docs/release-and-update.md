@@ -10,7 +10,7 @@ flowchart LR
     Tests --> PyInstaller["PyInstaller onedir"]
     PyInstaller --> Smoke["打包後 smoke test"]
     Smoke --> Inno["Inno Setup"]
-    Inno --> Installer["本機PDF工具箱-安裝程式.exe"]
+    Inno --> Installer["LocalPDFToolbox-Setup-v版本.exe"]
 ```
 
 安裝程式預設包含所有執行所需內容，不使用 Inno Setup 的 `external` 或 `download` 模式。因此使用者安裝及日常使用不需網路，也不需另外安裝 Python。
@@ -33,7 +33,7 @@ flowchart LR
 .\scripts\build.ps1
 ```
 
-腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組與 PDFium／授權檔核對、安裝版 `--self-test`、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
+腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組與 PDFium／授權檔核對、安裝版 `--self-test`、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。正式候選檔名為 `LocalPDFToolbox-Setup-v版本.exe`，一般測試檔名為 `LocalPDFToolbox-Setup-v版本-unsigned-test.exe`；版本號使不同版本可在同一資料夾共存，相同版本重新建置則更新該版本候選檔。
 
 未簽章公開測試版建置：
 
@@ -52,7 +52,7 @@ flowchart LR
 
 ```powershell
 .\scripts\verify-release.ps1 `
-  -InstallerPath ".\本機PDF工具箱-安裝程式.exe" `
+  -InstallerPath ".\LocalPDFToolbox-Setup-v0.2.0.exe" `
   -ExpectedVersion "0.2.0" `
   -AllowUnsignedDevelopmentBuild `
   -InteractiveGuiCheck
@@ -108,7 +108,7 @@ flowchart LR
 - `main`：原始碼、`uv.lock`、文件、測試與建置腳本。
 - `updates/update.json`：啟動器讀取的版本資訊；發布新版安裝程式後才更新。
 - Git tags：`v0.1.0`、`v0.2.0` 等對應原始碼版本。
-- GitHub Releases：保存每個版本的完整安裝程式與 SHA-256，不將二進位檔提交到 Git 歷史。公開資產採 `LocalPDFToolbox-Setup-v版本.exe` 命名，避免 GitHub 清理全中文資產名稱。
+- GitHub Releases：保存每個版本的完整安裝程式與 SHA-256，不將二進位檔提交到 Git 歷史。本機建置與公開資產都採 `LocalPDFToolbox-Setup-v版本.exe` 命名，避免覆蓋舊版本，也避免 GitHub 清理全中文資產名稱。
 
 ## 已發布版本
 

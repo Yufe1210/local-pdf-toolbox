@@ -99,6 +99,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 公開 `updates/update.json` 仍維持已發布的 0.1.0；在 0.2.0 GitHub Release 與資產可下載前不更新 feed。
 - 尚待：在無 Python 的外部 Windows 電腦執行 `verify-release.ps1 -ExpectedVersion 0.2.0 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck`，並從已安裝 0.1.0 驗證更新提示、GitHub 下載與覆蓋安裝。
 
+後續建置已改採版本化輸出：正式候選為 `LocalPDFToolbox-Setup-v版本.exe`，一般測試建置為 `LocalPDFToolbox-Setup-v版本-unsigned-test.exe`，SHA-256 清單使用相同檔名再加 `.sha256`。上方固定中文檔名保留為歷史建置紀錄；未來不同版本不再互相覆蓋。
+
+版本化輸出已用完整 `-ReleaseBuild` 實測：新產生的 `LocalPDFToolbox-Setup-v0.2.0.exe` 為 65,764,188 bytes，產品版本 0.2.0，SHA-256 `a66e1296297034a75a1271f247bf0bc5468ace396bb970d460e67de2877e8acb`；建置前既有的固定中文檔名候選檔仍維持 SHA-256 `d9b0adb1029632a9851590e10fbe295861a465cd144103d34644cafc5af4e789`，修改時間與內容均未改變。
+
 ## 已接受風險與後續驗證
 
 | 驗收項目 | 狀態 | 尚缺條件 |

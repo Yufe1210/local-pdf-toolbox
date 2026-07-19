@@ -8,7 +8,7 @@
   #define OutputDir "..\release"
 #endif
 #ifndef OutputBaseName
-  #define OutputBaseName "本機PDF工具箱-安裝程式-未簽章測試版"
+  #define OutputBaseName "LocalPDFToolbox-Setup-v" + MyAppVersion + "-unsigned-test"
 #endif
 
 [Setup]

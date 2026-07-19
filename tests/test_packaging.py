@@ -64,6 +64,16 @@ def test_unsigned_release_build_is_explicitly_supported() -> None:
     assert "正式建置必須提供 CertificateThumbprint" not in build_script
 
 
+def test_installer_outputs_are_versioned_to_preserve_older_versions() -> None:
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8-sig")
+    installer = (ROOT / "packaging" / "installer.iss").read_text(encoding="utf-8")
+
+    assert '"LocalPDFToolbox-Setup-v$version"' in build_script
+    assert '"LocalPDFToolbox-Setup-v$version-unsigned-test"' in build_script
+    assert '"$installer.sha256"' in build_script
+    assert '"LocalPDFToolbox-Setup-v" + MyAppVersion + "-unsigned-test"' in installer
+
+
 def test_all_toolbox_modules_are_explicit_packaging_inputs() -> None:
     spec = (ROOT / "packaging" / "pdf_toolbox.spec").read_text(encoding="utf-8")
     build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8-sig")

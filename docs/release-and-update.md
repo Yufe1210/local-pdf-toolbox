@@ -35,7 +35,7 @@ flowchart LR
 
 腳本會依序執行 `uv sync`、`pytest`、PyInstaller、必要模組與 PDFium／授權檔核對、安裝版 `--self-test`、封裝後本機服務 smoke test、Inno Setup，最後在 `release/` 產生安裝程式與 UTF-8 格式的 SHA-256 清單。
 
-`0.1.0` 未簽章公開測試版建置：
+未簽章公開測試版建置：
 
 ```powershell
 .\scripts\build.ps1 `
@@ -68,11 +68,11 @@ flowchart LR
 
 - 使用 `MAJOR.MINOR.PATCH`。
 - 0.1.0：合併 PDF、離線安裝與更新基礎架構。
-- 0.2.0：新增拆分 PDF。
+- 0.2.0：新增多 PDF 逐頁轉 PNG／JPEG 及兩種 ZIP 結構。
 - 修正但不新增功能時增加 PATCH。
 - 新增向後相容功能時增加 MINOR。
 - 發生不相容的設定、資料或更新協議變更時增加 MAJOR。
-- 版本需在專案設定、執行檔資訊、Inno Setup 與更新資訊中保持一致。
+- 專案設定、執行檔資訊與 Inno Setup 版本需保持一致。公開 `updates/update.json` 表示「已發布可下載版本」，開發及候選階段可落後於程式版本，但不可高於已存在的 GitHub Release。
 - Inno Setup `AppId` 一旦首次發布就永久固定，讓新版能覆蓋安裝舊版。
 
 ## 更新流程
@@ -94,8 +94,8 @@ flowchart LR
   "version": "0.2.0",
   "release_url": "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
   "release_notes": [
-    "新增拆分 PDF",
-    "改善大型 PDF 處理"
+    "新增多 PDF 逐頁轉 PNG 或 JPEG",
+    "支援每份 PDF 子資料夾或 ZIP 根目錄兩種輸出結構"
   ]
 }
 ```

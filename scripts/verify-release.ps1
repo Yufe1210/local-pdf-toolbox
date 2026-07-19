@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory = $true)]
     [string]$InstallerPath,
-    [string]$ExpectedVersion = "0.1.0",
+    [string]$ExpectedVersion = "0.2.0",
     [switch]$AllowUnsignedDevelopmentBuild,
     [switch]$InteractiveGuiCheck
 )
@@ -165,7 +165,10 @@ try {
         Write-Host "  3. 中文及重複檔名、頁數與第一頁縮圖均正確，直向／橫向／旋轉方向正常。"
         Write-Host "  4. 在多欄網格中跨列拖曳、移除與清除全部均會同步更新同一份清單。"
         Write-Host "  5. 依畫面順序合併，下載檔名、總頁數、頁面尺寸、方向及內容正確。"
-        Write-Host "  6. 啟動器的重新開啟介面與檢查更新操作正常；離線時 PDF 功能不受影響。"
+        Write-Host "  6. 進入 PDF 轉圖片，加入一份與多份 PDF；第一頁預覽、拖曳、移除及清除均正確。"
+        Write-Host "  7. 分別驗證 PNG、JPEG、DPI、JPEG 品質、子資料夾與 ZIP 根目錄輸出。"
+        Write-Host "  8. 中文、重複檔名、至少三位頁碼、ZIP 檔名、圖片數量、方向與清晰度均正確。"
+        Write-Host "  9. 啟動器的重新開啟介面與檢查更新操作正常；離線時 PDF 功能不受影響。"
         Write-Host "請先不要自行關閉啟動器；腳本下一步會正常關閉它。"
         $guiResult = (Read-Host "全部通過後輸入 PASS；輸入其他內容會中止驗收").Trim()
         if ($guiResult -cne "PASS") {
@@ -211,7 +214,7 @@ try {
         throw "解除安裝後仍有應用程式資料目錄。"
     }
 
-    Write-Host "0.1.0 發布驗收通過。"
+    Write-Host "$ExpectedVersion 發布驗收通過。"
 }
 finally {
     if ($LauncherProcess -and -not $LauncherProcess.HasExited) {

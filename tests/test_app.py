@@ -5,6 +5,7 @@ from pypdf import PdfReader, PdfWriter
 from streamlit.testing.v1 import AppTest
 
 from pdf_toolbox.ui import merge as merge_ui
+from pdf_toolbox.ui import pdf_to_images as images_ui
 from pdf_toolbox.ui.pdf_grid import PDFGridEvent
 from pdf_toolbox.ui.shutdown_notice import SHUTDOWN_MONITOR_HTML
 
@@ -12,6 +13,11 @@ from pdf_toolbox.ui.shutdown_notice import SHUTDOWN_MONITOR_HTML
 MERGE_PAGE_SCRIPT = """
 from pdf_toolbox.ui.merge import render_merge_page
 render_merge_page()
+"""
+
+IMAGES_PAGE_SCRIPT = """
+from pdf_toolbox.ui.pdf_to_images import render_pdf_to_images_page
+render_pdf_to_images_page()
 """
 
 
@@ -39,8 +45,8 @@ def test_home_page_and_merge_navigation() -> None:
     assert not app.exception
     assert [title.value for title in app.title] == ["本機 PDF 工具箱"]
     assert app.button[0].label == "開啟合併工具"
-    assert app.button[1].label == "尚未開放"
-    assert app.button[1].disabled
+    assert app.button[1].label == "開啟 PDF 轉圖片"
+    assert not app.button[1].disabled
 
     app.button[0].click().run(timeout=10)
 
@@ -49,6 +55,91 @@ def test_home_page_and_merge_navigation() -> None:
     merge_buttons = [button for button in app.button if button.label == "合併 PDF"]
     assert len(merge_buttons) == 1
     assert merge_buttons[0].disabled
+
+
+def image_page_with_items(items: list[dict[str, object]]) -> AppTest:
+    app = AppTest.from_string(IMAGES_PAGE_SCRIPT)
+    app.session_state["image_pdf_items"] = items
+    app.session_state["image_uploader_version"] = 0
+    app.session_state["image_upload_error"] = None
+    app.session_state["image_result"] = None
+    app.session_state["image_zip_name"] = "pdf-images.zip"
+    app.session_state["image_auto_zip_name"] = "pdf-images.zip"
+    return app.run(timeout=10)
+
+
+def test_home_navigates_to_pdf_to_images_page() -> None:
+    app = AppTest.from_file("app.py").run(timeout=10)
+
+    app.button[1].click().run(timeout=10)
+
+    assert not app.exception
+    assert [title.value for title in app.title] == ["PDF 轉圖片"]
+    convert_buttons = [
+        button for button in app.button if button.label == "轉換並建立 ZIP"
+    ]
+    assert len(convert_buttons) == 1
+    assert convert_buttons[0].disabled
+
+
+def test_pdf_to_images_page_converts_multiple_files() -> None:
+    app = image_page_with_items(
+        [
+            {
+                "id": "first",
+                "name": "掃描.pdf",
+                "data": make_pdf(72, 72),
+                "page_count": 1,
+                "error": None,
+            },
+            {
+                "id": "second",
+                "name": "掃描.PDF",
+                "data": make_pdf(72, 144),
+                "page_count": 1,
+                "error": None,
+            },
+        ]
+    )
+
+    convert_button = next(
+        button for button in app.button if button.label == "轉換並建立 ZIP"
+    )
+    assert not convert_button.disabled
+    convert_button.click().run(timeout=10)
+
+    assert not app.exception
+    result = app.session_state["image_result"]
+    assert result["pdf_count"] == 2
+    assert result["image_count"] == 2
+    assert result["data"].startswith(b"PK")
+    assert [message.value for message in app.success] == [
+        "轉換完成：2 份 PDF，共 2 張圖片。"
+    ]
+    assert [button.label for button in app.download_button] == ["下載圖片 ZIP"]
+
+
+def test_pdf_to_images_grid_changes_invalidate_result_and_refresh_auto_name(
+    monkeypatch,
+) -> None:
+    state = SimpleNamespace(
+        image_pdf_items=[
+            {"id": "first", "name": "第一.pdf"},
+            {"id": "second", "name": "第二.pdf"},
+        ],
+        image_upload_error="old",
+        image_result={"data": b"old"},
+        image_zip_name="pdf-images.zip",
+        image_auto_zip_name="pdf-images.zip",
+    )
+    monkeypatch.setattr(images_ui.st, "session_state", state)
+
+    images_ui._apply_grid_event(PDFGridEvent(action="remove", item_id="second"))
+
+    assert [item["id"] for item in state.image_pdf_items] == ["first"]
+    assert state.image_result is None
+    assert state.image_upload_error is None
+    assert state.image_zip_name == "第一-images.zip"
 
 
 def test_browser_shutdown_monitor_waits_for_health_then_shows_closed_state() -> None:

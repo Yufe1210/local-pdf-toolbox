@@ -237,7 +237,7 @@ function render(items) {
 
   const grid = document.createElement("section");
   grid.className = "pdf-grid";
-  grid.setAttribute("aria-label", "PDF 合併順序");
+  grid.setAttribute("aria-label", "PDF 文件清單");
   currentItems.forEach((item, index) => grid.appendChild(makeCard(item, index)));
 
   root.appendChild(grid);

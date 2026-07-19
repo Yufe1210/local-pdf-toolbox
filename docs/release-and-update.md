@@ -53,12 +53,12 @@ flowchart LR
 ```powershell
 .\scripts\verify-release.ps1 `
   -InstallerPath ".\本機PDF工具箱-安裝程式.exe" `
-  -ExpectedVersion "0.1.0" `
+  -ExpectedVersion "0.2.0" `
   -AllowUnsignedDevelopmentBuild `
   -InteractiveGuiCheck
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、離線拖曳網格、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁與合併頁的 Python 程式、建立兩張 PDF 卡片、載入拖曳網格後端，並驗證代表性 PDF 讀取、第一頁渲染及合併；但人工 GUI 驗收仍不可由它或健康檢查取代。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、離線拖曳網格、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁、合併頁與 PDF 轉圖片頁的 Python 程式，建立 PDF 卡片、載入拖曳網格後端，並驗證代表性 PDF 讀取、第一頁渲染、合併及 PNG ZIP；但人工 GUI 驗收仍不可由它或健康檢查取代。
 
 加入 `-InteractiveGuiCheck` 後，腳本會在服務驗證完成後暫停，列出首頁、預覽、中文與重複檔名、響應式多欄與跨列拖曳、合併下載、更新入口等檢查項目，只有輸入大寫 `PASS` 才會繼續。腳本正常關閉服務後會再次暫停，要求確認啟動器已消失，且原瀏覽器分頁可清楚辨識服務已停止或無法繼續操作；不要求顯示指定文字。之後腳本才解除安裝。省略此參數時仍可執行無人值守的安裝生命週期檢查。
 
@@ -130,8 +130,8 @@ flowchart LR
 - 建立乾淨的 PyInstaller onedir。
 - 核對 `packaging/required_toolbox_modules.txt` 中的模組均存在於 PyInstaller 模組清單。
 - 預覽功能加入後，核對 pypdfium2、PDFium 原生元件及必要授權文件均存在於 onedir 與安裝程式。
-- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、兩張 PDF 卡片、專案內拖曳網格後端與離線前端資源、預覽模組及代表性第一頁渲染。
-- 測試打包後啟動、實際載入首頁與合併頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
+- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、PDF 轉圖片介面、PDF 卡片、專案內拖曳網格後端與離線前端資源、預覽模組、代表性第一頁渲染、合併及 PNG ZIP。
+- 測試打包後啟動、實際載入首頁、合併頁與 PDF 轉圖片頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
 - 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。
 - 產生並驗證 SHA-256。

@@ -1,10 +1,10 @@
-# 0.1.0 驗收紀錄
+# 發布與驗收紀錄
 
 > 更新日期：2026-07-19
 >
 > 本文件記錄實際執行結果；產品需求仍以 `requirements.md` 為準。
 
-## 本機已完成驗證
+## 0.1.0 已完成驗證
 
 | 驗收項目 | 結果 | 證據 |
 | --- | --- | --- |
@@ -86,18 +86,32 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 
 `build/`、`dist/`、`release/` 與上述安裝包都在 Git ignore 範圍；每次重新建置後雜湊會改變，正式發布應以該次 `.sha256` 檔為準。
 
+## 0.2.0 PDF 轉圖片候選驗證
+
+2026-07-19 已完成目前原始碼的本機功能、視覺、瀏覽器及未簽章候選打包驗證：
+
+- 自動化：`uv run python -m pytest` 共 72 項全數通過。
+- 核心：一份及多份 PDF、PNG、JPEG、150／200／300 DPI、JPEG 品質、子資料夾與 ZIP 根目錄結構、中文及重複名稱、至少三位頁碼、ZIP 檔名、整批先驗證、加密／損壞／非 PDF／空白拒絕及單頁像素上限均有測試。
+- 視覺：以有文字、色塊、斜線及圓形的直向、橫向、90° 旋轉及第二份方形 PDF 實際轉換；PNG 與 JPEG 的內容、方向、裁切、文字邊緣及頁面尺寸正常，並以 Poppler 交叉核對來源頁。
+- 瀏覽器：實際加入兩份共四頁 PDF，第一頁預覽、響應式雙欄卡片、頁數統計、轉換及完成下載狀態正確，瀏覽器主控台無錯誤。
+- 封裝：`.\scripts\build.ps1 -ReleaseBuild` 未使用略過參數；72 項測試、18 個自家模組、PDFium DLL、第三方授權、自訂拖曳網格、安裝版 `--self-test`、loopback smoke test 及 Inno Setup 全部通過。
+- 候選安裝程式：`本機PDF工具箱-安裝程式.exe`，65,760,417 bytes，產品版本 0.2.0，SHA-256 `d9b0adb1029632a9851590e10fbe295861a465cd144103d34644cafc5af4e789`，簽章狀態 `NotSigned`。
+- 公開 `updates/update.json` 仍維持已發布的 0.1.0；在 0.2.0 GitHub Release 與資產可下載前不更新 feed。
+- 尚待：在無 Python 的外部 Windows 電腦執行 `verify-release.ps1 -ExpectedVersion 0.2.0 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck`，並從已安裝 0.1.0 驗證更新提示、GitHub 下載與覆蓋安裝。
+
 ## 已接受風險與後續驗證
 
 | 驗收項目 | 狀態 | 尚缺條件 |
 | --- | --- | --- |
 | 正式 Authenticode 簽章 | 延後 | 0.1.0 已決定採未簽章公開測試版；未來恢復自動更新或擴大發布前再取得 |
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
-| 最新候選檔封裝後 smoke test | 通過 | 完整建置未使用略過參數；最終 onedir 的 `--self-test`、健康檢查、loopback 監聽及外部 Windows 安裝版操作均通過 |
+| 最新候選檔封裝後 smoke test | 通過 | 0.2.0 完整建置未使用略過參數；最終 onedir 的新功能 `--self-test`、健康檢查與 loopback 監聽通過 |
 | 無 Python 電腦離線安裝 | 通過 | 使用者回報外部 Windows 環境的安裝與日常操作皆正常 |
 | 捷徑雙擊、GUI、拖曳、結束狀態及無背景程序 | 通過 | 桌面捷徑啟動、PDF 預覽與跨列拖曳、合併下載、啟動器結束及背景程序檢查正常；瀏覽器可辨識服務已停止，不要求指定關閉文字 |
 | 解除安裝與資料清理 | 通過 | 使用者完成解除安裝檢查，未回報異常 |
 | Windows 10／11 x64 相容性 | 部分確認 | 外部 Windows 驗收通過；本次回報未記錄確切 Windows 版本，未宣稱 Windows 10 與 11 已各自驗收 |
-| 0.1.0 更新至後續版本 | 待處理 | 待下一個版本驗證提示、GitHub 下載與手動覆蓋安裝 |
+| 0.2.0 無 Python 電腦離線安裝與 GUI | 待處理 | 使用最新候選檔執行外部 Windows 完整安裝、PDF 轉圖片及解除安裝驗收 |
+| 0.1.0 更新至 0.2.0 | 待處理 | 待 0.2.0 Release 建立後驗證提示、GitHub 下載與手動覆蓋安裝 |
 
 ## 目前主機限制
 

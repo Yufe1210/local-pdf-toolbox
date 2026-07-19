@@ -9,7 +9,7 @@ import streamlit as st
 from pdf_toolbox import __version__
 
 
-def render_home(merge_page: Any) -> None:
+def render_home(merge_page: Any, pdf_to_images_page: Any) -> None:
     """Render the simple tool selection home page."""
 
     st.title("本機 PDF 工具箱")
@@ -23,10 +23,10 @@ def render_home(merge_page: Any) -> None:
             st.switch_page(merge_page)
 
     with st.container(border=True):
-        st.markdown("### 拆分 PDF")
-        st.write("規劃於下一版本提供。")
-        st.button("尚未開放", disabled=True, use_container_width=True)
+        st.markdown("### PDF 轉圖片")
+        st.write("將一份或多份 PDF 的每一頁轉為 PNG 或 JPEG。")
+        if st.button("開啟 PDF 轉圖片", use_container_width=True):
+            st.switch_page(pdf_to_images_page)
 
     st.info("所有 PDF 都只在本機處理，不會上傳到外部服務。")
     st.caption(f"版本 {__version__}")
-

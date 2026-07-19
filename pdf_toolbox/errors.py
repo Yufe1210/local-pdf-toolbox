@@ -11,3 +11,7 @@ class PDFMergeError(PDFToolError):
 
 class PDFPreviewError(PDFToolError):
     """Raised when the first page of a PDF cannot be rendered safely."""
+
+
+class PDFToImagesError(PDFToolError):
+    """Raised when one or more PDFs cannot be converted to images."""

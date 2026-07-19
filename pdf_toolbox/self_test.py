@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from zipfile import ZipFile
 
 from pypdf import PdfReader, PdfWriter
 
@@ -56,6 +57,8 @@ def _run_streamlit_pages(pdf_data: bytes, thumbnail: bytes) -> None:
     )
     if open_merge is None:
         raise RuntimeError("首頁缺少合併工具入口。")
+    if not any(button.label == "開啟 PDF 轉圖片" for button in app.button):
+        raise RuntimeError("首頁缺少 PDF 轉圖片入口。")
 
     open_merge.click().run(timeout=15)
     if app.exception:
@@ -68,11 +71,46 @@ def _run_streamlit_pages(pdf_data: bytes, thumbnail: bytes) -> None:
     if len(merge_buttons) != 1 or merge_buttons[0].disabled:
         raise RuntimeError("合併介面未進入可合併狀態。")
 
+    image_app = AppTest.from_string(
+        "from pdf_toolbox.ui.pdf_to_images import render_pdf_to_images_page\n"
+        "render_pdf_to_images_page()\n"
+    )
+    image_app.session_state["image_pdf_items"] = [
+        {
+            "id": "self-test-image",
+            "name": "自我檢查.pdf",
+            "data": pdf_data,
+            "page_count": 1,
+            "thumbnail": thumbnail,
+            "error": None,
+        }
+    ]
+    image_app.session_state["image_uploader_version"] = 0
+    image_app.session_state["image_upload_error"] = None
+    image_app.session_state["image_result"] = None
+    image_app.session_state["image_zip_name"] = "自我檢查-images.zip"
+    image_app.session_state["image_auto_zip_name"] = "自我檢查-images.zip"
+    image_app.run(timeout=15)
+    if image_app.exception:
+        raise RuntimeError(
+            f"PDF 轉圖片介面執行失敗：{image_app.exception[0].message}"
+        )
+    if [title.value for title in image_app.title] != ["PDF 轉圖片"]:
+        raise RuntimeError("PDF 轉圖片介面標題不符。")
+    convert_buttons = [
+        button
+        for button in image_app.button
+        if button.label == "轉換並建立 ZIP"
+    ]
+    if len(convert_buttons) != 1 or convert_buttons[0].disabled:
+        raise RuntimeError("PDF 轉圖片介面未進入可轉換狀態。")
+
 
 def run_self_test() -> tuple[str, ...]:
     """Exercise the imports and in-memory PDF path needed by the installed app."""
 
     from pdf_toolbox.features.merge import merge_pdfs
+    from pdf_toolbox.features.pdf_to_images import convert_pdfs_to_images
     from pdf_toolbox.pdf import inspect_pdf
     from pdf_toolbox.preview import render_first_page_thumbnail
     from pdf_toolbox.ui.pdf_grid import PDF_GRID_FRONTEND, render_pdf_grid
@@ -121,10 +159,33 @@ def run_self_test() -> tuple[str, ...]:
         first.close()
         second.close()
 
+    image_source = BytesIO(pdf_data)
+    image_source.name = "自我檢查.pdf"  # type: ignore[attr-defined]
+    try:
+        image_result = convert_pdfs_to_images(
+            [image_source],
+            image_format="png",
+            dpi=150,
+        )
+        try:
+            with ZipFile(image_result.archive) as archive:
+                if archive.namelist() != [
+                    "自我檢查/自我檢查-001.png"
+                ]:
+                    raise RuntimeError("PDF 轉圖片 ZIP 結構不符。")
+                image_data = archive.read("自我檢查/自我檢查-001.png")
+                if not image_data.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise RuntimeError("PDF 轉圖片結果不是有效 PNG。")
+        finally:
+            image_result.archive.close()
+    finally:
+        image_source.close()
+
     return (
-        "首頁與合併介面",
+        "首頁、合併與 PDF 轉圖片介面",
         "PDF 響應式拖曳網格",
         "PDF 驗證",
         "PDFium 第一頁預覽",
         "PDF 合併",
+        "PDF 轉圖片 ZIP",
     )

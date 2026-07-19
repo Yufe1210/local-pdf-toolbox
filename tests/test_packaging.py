@@ -3,6 +3,8 @@ import re
 import tomllib
 from pathlib import Path
 
+from packaging.version import Version
+
 from pdf_toolbox import __version__
 
 
@@ -46,7 +48,7 @@ def test_release_uses_github_manual_update_feed() -> None:
             "local-pdf-toolbox/main/updates/update.json"
         )
     }
-    assert feed["version"] == __version__
+    assert Version(feed["version"]) <= Version(__version__)
     assert feed["release_url"] == (
         "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest"
     )

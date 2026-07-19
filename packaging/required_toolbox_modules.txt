@@ -3,6 +3,7 @@ pdf_toolbox.config
 pdf_toolbox.errors
 pdf_toolbox.features
 pdf_toolbox.features.merge
+pdf_toolbox.features.pdf_to_images
 pdf_toolbox.filenames
 pdf_toolbox.pdf
 pdf_toolbox.preview
@@ -11,5 +12,7 @@ pdf_toolbox.ui
 pdf_toolbox.ui.home
 pdf_toolbox.ui.merge
 pdf_toolbox.ui.pdf_grid
+pdf_toolbox.ui.pdf_items
+pdf_toolbox.ui.pdf_to_images
 pdf_toolbox.ui.shutdown_notice
 pdf_toolbox.updater

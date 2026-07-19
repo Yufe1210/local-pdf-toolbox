@@ -88,5 +88,6 @@ def test_pdf_grid_frontend_is_offline_responsive_and_two_dimensional() -> None:
     assert "insertionReference" in combined
     assert "ordered_ids" in combined
     assert "maxHeight" in combined
+    assert '"PDF 文件清單"' in combined
     assert "http://" not in combined
     assert "https://" not in combined

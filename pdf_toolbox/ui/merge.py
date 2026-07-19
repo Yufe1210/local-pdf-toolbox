@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from io import BytesIO
 from typing import Any, Sequence
-from uuid import uuid4
 
 import streamlit as st
 
-from pdf_toolbox.errors import PDFMergeError, PDFPreviewError
+from pdf_toolbox.errors import PDFMergeError
 from pdf_toolbox.features.merge import merge_pdfs, sanitize_output_filename
-from pdf_toolbox.pdf import inspect_pdf
-from pdf_toolbox.preview import DEFAULT_THUMBNAIL_WIDTH, render_first_page_thumbnail
 from pdf_toolbox.ui.pdf_grid import PDFGridEvent, render_pdf_grid
+from pdf_toolbox.ui.pdf_items import (
+    build_pdf_item as _build_pdf_item,
+    named_stream as _named_stream,
+    validate_upload_capacity,
+)
 
 
 MAX_PDF_FILES = 50
@@ -31,12 +32,6 @@ def _init_state() -> None:
             st.session_state[key] = value
 
 
-def _named_stream(data: bytes, name: str) -> BytesIO:
-    stream = BytesIO(data)
-    stream.name = name  # type: ignore[attr-defined]
-    return stream
-
-
 def _clear_result() -> None:
     st.session_state.merged_result = None
 
@@ -45,39 +40,12 @@ def _validate_upload_capacity(
     existing_items: Sequence[dict[str, Any]],
     new_files: Sequence[bytes],
 ) -> str | None:
-    total_files = len(existing_items) + len(new_files)
-    if total_files > MAX_PDF_FILES:
-        return f"一次最多加入 {MAX_PDF_FILES} 份 PDF；目前這批加入後會有 {total_files} 份。"
-
-    existing_bytes = sum(len(item["data"]) for item in existing_items)
-    total_bytes = existing_bytes + sum(len(data) for data in new_files)
-    if total_bytes > MAX_TOTAL_BYTES:
-        return "PDF 總容量不可超過 500 MB，請移除部分檔案後再試。"
-    return None
-
-
-def _build_pdf_item(data: bytes, name: str) -> dict[str, Any]:
-    page_count: int | None = None
-    validation_error: str | None = None
-    thumbnail: bytes | None = None
-    try:
-        stream = _named_stream(data, name)
-        try:
-            page_count = inspect_pdf(stream).page_count
-        finally:
-            stream.close()
-        thumbnail = render_first_page_thumbnail(data, name, width=DEFAULT_THUMBNAIL_WIDTH)
-    except (PDFMergeError, PDFPreviewError) as exc:
-        validation_error = str(exc)
-
-    return {
-        "id": uuid4().hex,
-        "name": name,
-        "data": data,
-        "page_count": page_count,
-        "thumbnail": thumbnail,
-        "error": validation_error,
-    }
+    return validate_upload_capacity(
+        existing_items,
+        new_files,
+        max_files=MAX_PDF_FILES,
+        max_total_bytes=MAX_TOTAL_BYTES,
+    )
 
 
 def _add_uploads(uploaded_files: Sequence[Any]) -> None:

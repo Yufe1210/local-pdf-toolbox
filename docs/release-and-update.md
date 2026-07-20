@@ -64,6 +64,20 @@ flowchart LR
 
 `-AllowUnsignedDevelopmentBuild` 是現有參數名稱；在 0.1.0 也用於明確接受未簽章公開測試版。它不會繞過 Windows 安全政策，若該電腦封鎖安裝程式，驗收仍會失敗。
 
+### 覆蓋升級自動驗收
+
+`release/` 同時放有兩個版本化安裝程式及各自的 `.sha256` 後，可在未安裝本機 PDF 工具箱的 Windows 使用：
+
+```powershell
+.\scripts\verify-upgrade.ps1 -AllowUnsignedDevelopmentBuild
+```
+
+預設驗證 `LocalPDFToolbox-Setup-v0.1.0.exe` 原地升級至 `LocalPDFToolbox-Setup-v0.2.0.exe`。若驗證其他版本或檔案位置，可傳入 `-PreviousInstallerPath`、`-NewInstallerPath`、`-ExpectedPreviousVersion` 與 `-ExpectedNewVersion`。
+
+腳本只使用 Windows PowerShell，不需要 Python 或 uv。執行前會驗證兩個安裝程式的產品版本、SHA-256 清單與簽章狀態；接著乾淨安裝舊版、驗證未自動啟動與舊版 `--self-test`，不先解除安裝而直接安裝新版，再驗證主程式位於同一位置、內容與版本已更新、固定 `AppId` 只留下單一解除安裝紀錄、新版 `--self-test` 通過，最後解除安裝並確認程式、資料、捷徑與登錄紀錄均已清理。
+
+為避免測試結束時誤刪使用者原有程式，偵測到既有安裝目錄、資料目錄、捷徑、解除安裝紀錄或執行中程序時，腳本會在安裝前停止且不修改現況。此腳本驗證安裝檔的覆蓋能力，不會假裝操作 GitHub 網頁；0.2.0 Release 存在後，更新提示及下載連結仍須另做人工驗收。
+
 ## 版本策略
 
 - 使用 `MAJOR.MINOR.PATCH`。

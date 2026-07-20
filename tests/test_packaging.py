@@ -121,3 +121,21 @@ def test_release_verifier_checks_no_auto_start_and_installed_self_test() -> None
     assert "Start-Process -FilePath $DesktopShortcut" in verifier
     assert 'Read-Host "全部通過後輸入 PASS' in verifier
     assert 'Read-Host "確認通過後輸入 PASS' in verifier
+
+
+def test_upgrade_verifier_checks_in_place_upgrade_and_cleanup() -> None:
+    verifier = (ROOT / "scripts" / "verify-upgrade.ps1").read_text(
+        encoding="utf-8-sig"
+    )
+
+    assert '[string]$ExpectedPreviousVersion = "0.1.0"' in verifier
+    assert '[string]$ExpectedNewVersion = "0.2.0"' in verifier
+    assert '"$Installer.sha256"' in verifier
+    assert "Get-AuthenticodeSignature" in verifier
+    assert "Assert-CleanStartingState" in verifier
+    assert "不解除安裝，直接覆蓋安裝" in verifier
+    assert verifier.count("Invoke-InstalledSelfTest") >= 3
+    assert "DisplayVersion" in verifier
+    assert "同一安裝位置與單一解除安裝紀錄" in verifier
+    assert "Invoke-InstalledUninstaller" in verifier
+    assert "Assert-Uninstalled" in verifier

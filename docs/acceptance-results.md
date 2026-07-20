@@ -88,21 +88,28 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 
 ## 0.2.0 PDF 轉圖片候選驗證
 
-2026-07-19 已完成目前原始碼的本機功能、視覺、瀏覽器及未簽章候選打包驗證；2026-07-20 使用者另回報 0.2.0 新增功能操作正常。本次回報未記錄測試電腦是否為無 Python 的外部環境，因此不據此將該項外部驗收標記完成。
+2026-07-19 已完成目前原始碼的本機功能、視覺、瀏覽器及未簽章候選打包驗證；2026-07-20 使用者回報 0.2.0 新增功能操作正常，且 `verify-release.ps1` 與 `verify-upgrade.ps1` 均通過。驗收涵蓋 0.2.0 完整安裝生命週期及 0.1.0 → 0.2.0 原地覆蓋升級；本次未記錄外部電腦的確切 Windows 版本。
 
-- 自動化：加入升級驗證腳本測試後共 74 項；2026-07-20 完整執行結果為 70 項通過、4 項既有 Streamlit UI／自我檢查測試在載入未簽章 `pyarrow` DLL 時被本機 Application Control 阻擋。新增的升級驗證靜態測試及其所在的 `tests/test_packaging.py` 9 項均通過；4 項失敗是執行環境拒絕載入 DLL，不是功能斷言失敗。
+- 自動化：加入升級驗證腳本測試後共 74 項；2026-07-20 發布資訊更新後重新執行 `uv run python -m pytest`，74 項全數通過。當天較早一次執行曾有 4 項既有 Streamlit UI／自我檢查測試因本機 Application Control 暫時阻擋未簽章 `pyarrow` DLL 而無法載入，後續重跑已恢復正常；間歇性政策風險仍保留於本文件的主機限制。
 - 核心：一份及多份 PDF、PNG、JPEG、150／200／300 DPI、JPEG 品質、子資料夾與 ZIP 根目錄結構、中文及重複名稱、至少三位頁碼、ZIP 檔名、整批先驗證、加密／損壞／非 PDF／空白拒絕及單頁像素上限均有測試。
 - 視覺：以有文字、色塊、斜線及圓形的直向、橫向、90° 旋轉及第二份方形 PDF 實際轉換；PNG 與 JPEG 的內容、方向、裁切、文字邊緣及頁面尺寸正常，並以 Poppler 交叉核對來源頁。
 - 瀏覽器：實際加入兩份共四頁 PDF，第一頁預覽、響應式雙欄卡片、頁數統計、轉換及完成下載狀態正確，瀏覽器主控台無錯誤。
 - 封裝：`.\scripts\build.ps1 -ReleaseBuild` 未使用略過參數；72 項測試、18 個自家模組、PDFium DLL、第三方授權、自訂拖曳網格、安裝版 `--self-test`、loopback smoke test 及 Inno Setup 全部通過。
 - 候選安裝程式：`本機PDF工具箱-安裝程式.exe`，65,760,417 bytes，產品版本 0.2.0，SHA-256 `d9b0adb1029632a9851590e10fbe295861a465cd144103d34644cafc5af4e789`，簽章狀態 `NotSigned`。
-- 公開 `updates/update.json` 仍維持已發布的 0.1.0；在 0.2.0 GitHub Release 與資產可下載前不更新 feed。
-- 尚待：在無 Python 的外部 Windows 電腦執行 `verify-release.ps1 -ExpectedVersion 0.2.0 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck`，並從已安裝 0.1.0 驗證更新提示、GitHub 下載與覆蓋安裝。
-- 升級自動驗證：已新增 `scripts/verify-upgrade.ps1`，核對兩版安裝程式版本、SHA-256 與簽章狀態，依序驗證 0.1.0 乾淨安裝、0.2.0 原地覆蓋、兩版 `--self-test`、同一安裝位置、單一解除安裝紀錄及最終清理。腳本語法與靜態測試通過；本機因已有 0.2.0 安裝且正在執行，安全檢查應拒絕修改，完整生命週期尚待乾淨狀態實跑。
+- 公開 `updates/update.json` 已切換至 0.2.0，並指向 GitHub Releases 的 `latest` 頁面。
+- 單版驗收：使用者回報 `verify-release.ps1 -ExpectedVersion 0.2.0 -AllowUnsignedDevelopmentBuild -InteractiveGuiCheck` 通過。
+- 升級驗收：使用者回報 `verify-upgrade.ps1 -AllowUnsignedDevelopmentBuild` 通過，包含兩版安裝程式與 SHA-256 核對、0.1.0 乾淨安裝、0.2.0 原地覆蓋、兩版 `--self-test`、同一安裝位置、單一解除安裝紀錄及最終清理。
 
 後續建置已改採版本化輸出：正式候選為 `LocalPDFToolbox-Setup-v版本.exe`，一般測試建置為 `LocalPDFToolbox-Setup-v版本-unsigned-test.exe`，SHA-256 清單使用相同檔名再加 `.sha256`。上方固定中文檔名保留為歷史建置紀錄；未來不同版本不再互相覆蓋。
 
 版本化輸出已用完整 `-ReleaseBuild` 實測：新產生的 `LocalPDFToolbox-Setup-v0.2.0.exe` 為 65,764,188 bytes，產品版本 0.2.0，SHA-256 `a66e1296297034a75a1271f247bf0bc5468ace396bb970d460e67de2877e8acb`；建置前既有的固定中文檔名候選檔仍維持 SHA-256 `d9b0adb1029632a9851590e10fbe295861a465cd144103d34644cafc5af4e789`，修改時間與內容均未改變。
+
+0.2.0 已發布為一般 GitHub Release：
+
+- tag：`v0.2.0`，指向 `f8313fb67a9f3485884ec4ebd3352b234e93b31a`。
+- Release：<https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.2.0>。
+- 公開資產：`LocalPDFToolbox-Setup-v0.2.0.exe` 與 `LocalPDFToolbox-Setup-v0.2.0.exe.sha256`。
+- GitHub 資產狀態：兩個檔案均為 `uploaded`；安裝程式大小為 65,764,188 bytes，GitHub SHA-256 digest 為 `a66e1296297034a75a1271f247bf0bc5468ace396bb970d460e67de2877e8acb`，與本機候選檔一致。
 
 ## 已接受風險與後續驗證
 
@@ -115,8 +122,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | 捷徑雙擊、GUI、拖曳、結束狀態及無背景程序 | 通過 | 桌面捷徑啟動、PDF 預覽與跨列拖曳、合併下載、啟動器結束及背景程序檢查正常；瀏覽器可辨識服務已停止，不要求指定關閉文字 |
 | 解除安裝與資料清理 | 通過 | 使用者完成解除安裝檢查，未回報異常 |
 | Windows 10／11 x64 相容性 | 部分確認 | 外部 Windows 驗收通過；本次回報未記錄確切 Windows 版本，未宣稱 Windows 10 與 11 已各自驗收 |
-| 0.2.0 無 Python 電腦離線安裝與 GUI | 待處理 | 使用最新候選檔執行外部 Windows 完整安裝、PDF 轉圖片及解除安裝驗收 |
-| 0.1.0 更新至 0.2.0 | 部分完成 | 原地覆蓋升級自動驗證腳本已完成；待乾淨狀態實跑，以及 0.2.0 Release 建立後驗證提示與 GitHub 下載 |
+| 0.2.0 無 Python 電腦離線安裝與 GUI | 通過 | 使用者回報 `verify-release.ps1` 完整驗收通過 |
+| 0.1.0 更新至 0.2.0 | 通過 | 使用者回報 `verify-upgrade.ps1` 原地覆蓋升級及清理通過；公開 Release 與下載資產已建立 |
 
 ## 目前主機限制
 

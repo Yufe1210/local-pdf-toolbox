@@ -1,7 +1,9 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "release_url": "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
   "release_notes": [
-    "第一個公開測試版：合併 PDF"
+    "新增多 PDF 逐頁轉 PNG 或 JPEG",
+    "支援每份 PDF 子資料夾或 ZIP 根目錄兩種輸出結構",
+    "支援 150、200、300 DPI 與 JPEG 品質設定"
   ]
 }

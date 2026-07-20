@@ -2,7 +2,7 @@
 
 這是一個以 Streamlit、pypdf 與 pypdfium2 製作的本機 PDF 工具箱。目前提供合併 PDF，以及將一份或多份 PDF 的每一頁轉成 PNG／JPEG 並以 ZIP 下載；第一頁預覽、拖曳卡片與 PDF 處理都只在程式記憶體中完成。
 
-目前已發布 [0.1.0 未簽章公開測試版](https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.1.0)；0.2.0 PDF 轉圖片已完成本機與封裝驗證，尚待外部 Windows 安裝驗收後發布。程式會提示已發布的新版並開啟 GitHub Releases，由使用者手動下載更新。詳細資訊請參閱 [專案文件](docs/README.md)。
+目前已發布 [0.2.0 未簽章公開測試版](https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.2.0)，包含合併 PDF 與多 PDF 逐頁轉 PNG／JPEG。程式會提示已發布的新版並開啟 GitHub Releases，由使用者手動下載更新。詳細資訊請參閱 [專案文件](docs/README.md)。
 
 ## 環境需求
 

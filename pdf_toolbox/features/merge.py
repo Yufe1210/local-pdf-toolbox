@@ -9,7 +9,12 @@ from pypdf import PdfReader, PdfWriter
 
 from pdf_toolbox.errors import PDFMergeError
 from pdf_toolbox.filenames import sanitize_pdf_filename
-from pdf_toolbox.pdf import display_name, inspect_pdfs, rewind
+from pdf_toolbox.pdf import (
+    display_name,
+    inspect_pdfs,
+    rewind,
+    unlock_pdf_with_empty_password,
+)
 
 
 def merge_pdfs(files: Sequence[BinaryIO]) -> BytesIO:
@@ -24,6 +29,7 @@ def merge_pdfs(files: Sequence[BinaryIO]) -> BytesIO:
             try:
                 rewind(file)
                 reader = PdfReader(file, strict=False)
+                unlock_pdf_with_empty_password(reader, name=name)
                 writer.append(reader, import_outline=False)
             except Exception as exc:
                 raise PDFMergeError(f"合併「{name}」時發生錯誤。") from exc
@@ -46,4 +52,3 @@ def sanitize_output_filename(value: str) -> str:
     """Return a safe merge download filename."""
 
     return sanitize_pdf_filename(value, fallback="merged")
-

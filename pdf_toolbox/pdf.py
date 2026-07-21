@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Sequence
 
-from pypdf import PdfReader
+from pypdf import PasswordType, PdfReader
 
 from pdf_toolbox.errors import PDFMergeError
 
@@ -37,6 +37,21 @@ def rewind(file: BinaryIO) -> None:
         raise PDFMergeError("檔案無法重新讀取，請重新選擇檔案。") from exc
 
 
+def unlock_pdf_with_empty_password(reader: PdfReader, *, name: str) -> None:
+    """Allow encryption with an empty user password and reject real passwords."""
+
+    if not reader.is_encrypted:
+        return
+    try:
+        password_type = reader.decrypt("")
+    except Exception as exc:
+        raise PDFMergeError(
+            f"無法解鎖「{name}」，檔案可能需要密碼或使用不支援的加密方式。"
+        ) from exc
+    if password_type == PasswordType.NOT_DECRYPTED:
+        raise PDFMergeError(f"「{name}」需要密碼才能開啟，目前不支援密碼輸入。")
+
+
 def inspect_pdf(file: BinaryIO, *, index: int = 0) -> PDFInfo:
     """Validate one PDF and return its display name and page count."""
 
@@ -49,8 +64,7 @@ def inspect_pdf(file: BinaryIO, *, index: int = 0) -> PDFInfo:
             raise PDFMergeError(f"「{name}」不是有效的 PDF 檔案。")
 
         reader = PdfReader(file, strict=False)
-        if reader.is_encrypted:
-            raise PDFMergeError(f"「{name}」受到密碼保護，目前不支援處理。")
+        unlock_pdf_with_empty_password(reader, name=name)
 
         page_count = len(reader.pages)
         if page_count == 0:
@@ -75,4 +89,3 @@ def inspect_pdfs(files: Sequence[BinaryIO], *, minimum: int = 1) -> list[PDFInfo
             raise PDFMergeError("請選擇至少 1 個 PDF 檔案。")
         raise PDFMergeError(f"請至少選擇 {minimum} 個 PDF 檔案。")
     return [inspect_pdf(file, index=index) for index, file in enumerate(files)]
-

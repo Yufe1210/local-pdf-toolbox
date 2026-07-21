@@ -128,8 +128,8 @@ def test_upgrade_verifier_checks_in_place_upgrade_and_cleanup() -> None:
         encoding="utf-8-sig"
     )
 
-    assert '[string]$ExpectedPreviousVersion = "0.1.0"' in verifier
-    assert '[string]$ExpectedNewVersion = "0.2.0"' in verifier
+    assert '[string]$ExpectedPreviousVersion = "0.2.0"' in verifier
+    assert '[string]$ExpectedNewVersion = "0.2.1"' in verifier
     assert '"$Installer.sha256"' in verifier
     assert "Get-AuthenticodeSignature" in verifier
     assert "Assert-CleanStartingState" in verifier

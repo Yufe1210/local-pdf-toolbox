@@ -6,6 +6,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.constants import UserAccessPermissions
 
 from pdf_toolbox.config import resource_path
 
@@ -13,6 +14,11 @@ from pdf_toolbox.config import resource_path
 def _representative_pdf() -> bytes:
     writer = PdfWriter()
     writer.add_blank_page(width=200, height=400)
+    writer.encrypt(
+        "",
+        owner_password="local-pdf-toolbox-self-test",
+        permissions_flag=UserAccessPermissions.PRINT,
+    )
     output = BytesIO()
     try:
         writer.write(output)

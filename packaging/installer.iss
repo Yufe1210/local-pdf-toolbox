@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "0.2.0"
+  #define MyAppVersion "0.2.1"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\dist\本機PDF工具箱"

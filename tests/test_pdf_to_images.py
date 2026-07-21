@@ -4,6 +4,7 @@ from zipfile import ZipFile
 import pytest
 from PIL import Image
 from pypdf import PdfWriter
+from pypdf.constants import UserAccessPermissions
 
 from pdf_toolbox.errors import PDFToImagesError
 from pdf_toolbox.features import pdf_to_images
@@ -21,6 +22,8 @@ def make_pdf(
     rotations: list[int] | None = None,
     *,
     password: str | None = None,
+    owner_password: str | None = None,
+    permissions: UserAccessPermissions | None = None,
 ) -> BytesIO:
     writer = PdfWriter()
     rotations = rotations or [0] * len(sizes)
@@ -28,8 +31,11 @@ def make_pdf(
         page = writer.add_blank_page(width=width, height=height)
         if rotation:
             page.rotate(rotation)
-    if password:
-        writer.encrypt(password)
+    if password is not None or owner_password is not None:
+        encrypt_options = {"owner_password": owner_password}
+        if permissions is not None:
+            encrypt_options["permissions_flag"] = permissions
+        writer.encrypt(password or "", **encrypt_options)  # type: ignore[arg-type]
     stream = BytesIO()
     writer.write(stream)
     writer.close()
@@ -151,9 +157,29 @@ def test_invalid_input_is_rejected_without_a_result(
 
 def test_encrypted_input_is_rejected_with_its_filename() -> None:
     protected = make_pdf("機密.pdf", [(72, 72)], password="secret")
-    with pytest.raises(PDFToImagesError, match="機密.pdf.*密碼保護"):
+    with pytest.raises(PDFToImagesError, match="機密.pdf.*需要密碼"):
         convert_pdfs_to_images([protected])
     protected.close()
+
+
+def test_empty_user_password_and_restrictive_permissions_convert() -> None:
+    protected = make_pdf(
+        "可直接開啟.pdf",
+        [(72, 144)],
+        password="",
+        owner_password="owner-secret",
+        permissions=UserAccessPermissions.PRINT,
+    )
+
+    result = convert_pdfs_to_images([protected], image_format="png", dpi=150)
+    try:
+        entries = archive_entries(result.archive.getvalue())
+        assert list(entries) == ["可直接開啟/可直接開啟-001.png"]
+        with Image.open(BytesIO(next(iter(entries.values())))) as image:
+            assert image.size == (150, 300)
+    finally:
+        result.archive.close()
+        protected.close()
 
 
 def test_entire_batch_is_validated_before_rendering(monkeypatch) -> None:

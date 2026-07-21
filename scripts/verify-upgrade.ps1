@@ -1,8 +1,8 @@
 ﻿param(
     [string]$PreviousInstallerPath = "",
     [string]$NewInstallerPath = "",
-    [string]$ExpectedPreviousVersion = "0.1.0",
-    [string]$ExpectedNewVersion = "0.2.0",
+    [string]$ExpectedPreviousVersion = "0.2.0",
+    [string]$ExpectedNewVersion = "0.2.1",
     [switch]$AllowUnsignedDevelopmentBuild
 )
 

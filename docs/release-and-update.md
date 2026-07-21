@@ -52,13 +52,13 @@ flowchart LR
 
 ```powershell
 .\scripts\verify-release.ps1 `
-  -InstallerPath ".\LocalPDFToolbox-Setup-v0.2.0.exe" `
-  -ExpectedVersion "0.2.0" `
+  -InstallerPath ".\LocalPDFToolbox-Setup-v0.2.1.exe" `
+  -ExpectedVersion "0.2.1" `
   -AllowUnsignedDevelopmentBuild `
   -InteractiveGuiCheck
 ```
 
-驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、離線拖曳網格、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁、合併頁與 PDF 轉圖片頁的 Python 程式，建立 PDF 卡片、載入拖曳網格後端，並驗證代表性 PDF 讀取、第一頁渲染、合併及 PNG ZIP；但人工 GUI 驗收仍不可由它或健康檢查取代。
+驗收腳本本身只使用 Windows PowerShell。目前會依序驗證 per-user 離線安裝、安裝完成後未自行啟動、版本、桌面與開始功能表捷徑、PDFium／授權檔、離線拖曳網格、安裝版 `--self-test`、由實際桌面捷徑啟動、健康檢查、只監聽 `127.0.0.1`、正常結束、不殘留背景程序、解除安裝及資料清理。`--self-test` 會實際執行首頁、合併頁與 PDF 轉圖片頁的 Python 程式，建立 PDF 卡片、載入拖曳網格後端，並以空 user password、非空 owner password 及限制權限的代表性 PDF 驗證讀取、第一頁渲染、合併及 PNG ZIP；但人工 GUI 驗收仍不可由它或健康檢查取代。
 
 加入 `-InteractiveGuiCheck` 後，腳本會在服務驗證完成後暫停，列出首頁、預覽、中文與重複檔名、響應式多欄與跨列拖曳、合併下載、更新入口等檢查項目，只有輸入大寫 `PASS` 才會繼續。腳本正常關閉服務後會再次暫停，要求確認啟動器已消失，且原瀏覽器分頁可清楚辨識服務已停止或無法繼續操作；不要求顯示指定文字。之後腳本才解除安裝。省略此參數時仍可執行無人值守的安裝生命週期檢查。
 
@@ -72,17 +72,18 @@ flowchart LR
 .\scripts\verify-upgrade.ps1 -AllowUnsignedDevelopmentBuild
 ```
 
-預設驗證 `LocalPDFToolbox-Setup-v0.1.0.exe` 原地升級至 `LocalPDFToolbox-Setup-v0.2.0.exe`。若驗證其他版本或檔案位置，可傳入 `-PreviousInstallerPath`、`-NewInstallerPath`、`-ExpectedPreviousVersion` 與 `-ExpectedNewVersion`。
+目前預設驗證 `LocalPDFToolbox-Setup-v0.2.0.exe` 原地升級至 `LocalPDFToolbox-Setup-v0.2.1.exe`。若驗證其他版本或檔案位置，可傳入 `-PreviousInstallerPath`、`-NewInstallerPath`、`-ExpectedPreviousVersion` 與 `-ExpectedNewVersion`。
 
 腳本只使用 Windows PowerShell，不需要 Python 或 uv。執行前會驗證兩個安裝程式的產品版本、SHA-256 清單與簽章狀態；接著乾淨安裝舊版、驗證未自動啟動與舊版 `--self-test`，不先解除安裝而直接安裝新版，再驗證主程式位於同一位置、內容與版本已更新、固定 `AppId` 只留下單一解除安裝紀錄、新版 `--self-test` 通過，最後解除安裝並確認程式、資料、捷徑與登錄紀錄均已清理。
 
-為避免測試結束時誤刪使用者原有程式，偵測到既有安裝目錄、資料目錄、捷徑、解除安裝紀錄或執行中程序時，腳本會在安裝前停止且不修改現況。此腳本驗證安裝檔的覆蓋能力，不會假裝操作 GitHub 網頁；0.2.0 Release 存在後，更新提示及下載連結仍須另做人工驗收。
+為避免測試結束時誤刪使用者原有程式，偵測到既有安裝目錄、資料目錄、捷徑、解除安裝紀錄或執行中程序時，腳本會在安裝前停止且不修改現況。此腳本驗證安裝檔的覆蓋能力，不會假裝操作 GitHub 網頁；新版 Release 存在後，更新提示及下載連結仍須另做人工驗收。
 
 ## 版本策略
 
 - 使用 `MAJOR.MINOR.PATCH`。
 - 0.1.0：合併 PDF、離線安裝與更新基礎架構。
 - 0.2.0：新增多 PDF 逐頁轉 PNG／JPEG 及兩種 ZIP 結構。
+- 0.2.1：修正可用空密碼直接開啟的權限保護 PDF 被誤判為需要密碼；依寬鬆政策忽略複製、修改及擷取等權限旗標，真正需要非空密碼的 PDF 仍不支援。
 - 修正但不新增功能時增加 PATCH。
 - 新增向後相容功能時增加 MINOR。
 - 發生不相容的設定、資料或更新協議變更時增加 MAJOR。
@@ -124,6 +125,16 @@ flowchart LR
 - Git tags：`v0.1.0`、`v0.2.0` 等對應原始碼版本。
 - GitHub Releases：保存每個版本的完整安裝程式與 SHA-256，不將二進位檔提交到 Git 歷史。本機建置與公開資產都採 `LocalPDFToolbox-Setup-v版本.exe` 命名，避免覆蓋舊版本，也避免 GitHub 清理全中文資產名稱。
 
+## 目前未發布候選
+
+### 0.2.1
+
+- 本機候選建置日期：2026-07-21。
+- 安裝程式：`release/LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes。
+- SHA-256：`ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`。
+- 狀態：未簽章；完整 `-ReleaseBuild`、76 項測試、封裝後 `--self-test` 與 loopback smoke test 均通過，尚待外部 Windows 的 0.2.0 → 0.2.1 覆蓋升級及 GUI 驗收。
+- 公開 `updates/update.json` 仍維持 0.2.0；候選通過驗收並建立 GitHub Release 前不得切換。
+
 ## 已發布版本
 
 ### 0.1.0
@@ -155,7 +166,7 @@ flowchart LR
 - 建立乾淨的 PyInstaller onedir。
 - 核對 `packaging/required_toolbox_modules.txt` 中的模組均存在於 PyInstaller 模組清單。
 - 預覽功能加入後，核對 pypdfium2、PDFium 原生元件及必要授權文件均存在於 onedir 與安裝程式。
-- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、PDF 轉圖片介面、PDF 卡片、專案內拖曳網格後端與離線前端資源、預覽模組、代表性第一頁渲染、合併及 PNG ZIP。
+- 執行安裝版 `--self-test`，實際跑過首頁、合併介面、PDF 轉圖片介面、PDF 卡片、專案內拖曳網格後端與離線前端資源、預覽模組、空密碼權限保護 PDF 的第一頁渲染、合併及 PNG ZIP。
 - 測試打包後啟動、實際載入首頁、合併頁與 PDF 轉圖片頁、PDF 操作與完整結束；不得只以健康檢查代替 GUI 驗收。
 - 建立 Inno Setup 安裝程式；若有憑證則簽署，沒有憑證則明確標示未簽章測試版。
 - 在無 Python 的乾淨 Windows 環境驗證安裝與解除安裝。

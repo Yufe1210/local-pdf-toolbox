@@ -1,6 +1,6 @@
 # 發布與驗收紀錄
 
-> 更新日期：2026-07-20
+> 更新日期：2026-07-21
 >
 > 本文件記錄實際執行結果；產品需求仍以 `requirements.md` 為準。
 
@@ -111,19 +111,32 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 公開資產：`LocalPDFToolbox-Setup-v0.2.0.exe` 與 `LocalPDFToolbox-Setup-v0.2.0.exe.sha256`。
 - GitHub 資產狀態：兩個檔案均為 `uploaded`；安裝程式大小為 65,764,188 bytes，GitHub SHA-256 digest 為 `a66e1296297034a75a1271f247bf0bc5468ace396bb970d460e67de2877e8acb`，與本機候選檔一致。
 
+## 0.2.1 空密碼 PDF 相容性修正
+
+2026-07-21 分析使用者提供的兩份可直接開啟 PDF。兩份檔案都含 PDF `/Encrypt` 字典，因此舊程式只檢查 `is_encrypted` 時會誤判；實際以空字串解鎖均回傳 user password 成功，代表不需要使用者輸入密碼。產品採寬鬆政策：空密碼解鎖成功即允許合併、預覽與轉圖片，不因禁止複製、修改或擷取等權限旗標拒絕；真正需要非空密碼或使用不支援加密方式的 PDF 仍拒絕。
+
+- 實際文件：`一類謄本-謝小姐1150611.pdf` 驗證為 2 頁，`地籍圖-鹽埕577.pdf` 驗證為 1 頁。
+- 轉圖片：兩份文件以 150 DPI、PNG、各自子資料夾模式在記憶體中完成，共產生 3 張 1240 × 1755 圖片；圖片均可解碼，兩份代表性第一頁另經視覺核對，文字、細線、方向及頁面邊界均正常，檢查後已刪除暫存圖片。
+- 合併：兩份文件在記憶體中依序合併為 3 頁，未產生部分結果或磁碟暫存。
+- 自動化：新增「空 user password、非空 owner password、僅允許列印」測試資料，覆蓋頁數驗證、合併與 PDF 轉圖片；既有真正需要密碼的拒絕測試保留。`uv run python -m pytest` 共 76 項全數通過。
+- 封裝：完整執行 `.\scripts\build.ps1 -ReleaseBuild`，未略過任何步驟；76 項測試、18 個自家模組、PDFium DLL、第三方授權、含空密碼權限保護 PDF 的安裝版 `--self-test`、loopback smoke test 及 Inno Setup 全部通過。
+- 候選安裝程式：`LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes，產品版本 0.2.1，SHA-256 `ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`，簽章狀態 `NotSigned`。
+- 候選狀態：本機開發、實際文件、視覺與封裝驗證已完成；外部 Windows 的 0.2.0 → 0.2.1 覆蓋升級及 GUI 驗收尚待完成。
+
 ## 已接受風險與後續驗證
 
 | 驗收項目 | 狀態 | 尚缺條件 |
 | --- | --- | --- |
 | 正式 Authenticode 簽章 | 延後 | 0.1.0 已決定採未簽章公開測試版；未來恢復自動更新或擴大發布前再取得 |
 | HTTPS 更新來源 | 已配置 | 公開 repository 的 `updates/update.json` 與 GitHub Releases |
-| 最新候選檔封裝後 smoke test | 通過 | 0.2.0 完整建置未使用略過參數；最終 onedir 的新功能 `--self-test`、健康檢查與 loopback 監聽通過 |
+| 最新候選檔封裝後 smoke test | 通過 | 0.2.1 完整建置未使用略過參數；最終 onedir 的空密碼 PDF `--self-test`、健康檢查與 loopback 監聽通過 |
 | 無 Python 電腦離線安裝 | 通過 | 使用者回報外部 Windows 環境的安裝與日常操作皆正常 |
 | 捷徑雙擊、GUI、拖曳、結束狀態及無背景程序 | 通過 | 桌面捷徑啟動、PDF 預覽與跨列拖曳、合併下載、啟動器結束及背景程序檢查正常；瀏覽器可辨識服務已停止，不要求指定關閉文字 |
 | 解除安裝與資料清理 | 通過 | 使用者完成解除安裝檢查，未回報異常 |
 | Windows 10／11 x64 相容性 | 部分確認 | 外部 Windows 驗收通過；本次回報未記錄確切 Windows 版本，未宣稱 Windows 10 與 11 已各自驗收 |
 | 0.2.0 無 Python 電腦離線安裝與 GUI | 通過 | 使用者回報 `verify-release.ps1` 完整驗收通過 |
 | 0.1.0 更新至 0.2.0 | 通過 | 使用者回報 `verify-upgrade.ps1` 原地覆蓋升級及清理通過；公開 Release 與下載資產已建立 |
+| 0.2.1 空密碼 PDF 修正 | 本機候選通過 | 核心、實際文件、視覺、76 項測試與完整建置已通過；尚待 0.2.0 → 0.2.1 外部 Windows 驗收 |
 
 ## 目前主機限制
 

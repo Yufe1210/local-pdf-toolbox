@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory = $true)]
     [string]$InstallerPath,
-    [string]$ExpectedVersion = "0.2.0",
+    [string]$ExpectedVersion = "0.2.1",
     [switch]$AllowUnsignedDevelopmentBuild,
     [switch]$InteractiveGuiCheck
 )

@@ -100,17 +100,17 @@ flowchart LR
 4. 使用者同意後以預設瀏覽器開啟 GitHub Releases；程式本身不下載或執行安裝程式。
 5. 使用者自行下載完整新版安裝程式、關閉舊版並執行覆蓋安裝。
 
-啟動後的自動檢查同一天至多一次；啟動器上的「檢查更新」按鈕不受此限制，可隨時重新檢查。只有 feed 版本高於已安裝版本才顯示提示；目前公開 feed 為 `0.2.0`，因此 0.1.0 會顯示更新，0.2.0 不會重複提示。固定 `AppId` 與安裝位置使新版直接更新既有安裝，不會建立第二份程式；使用者不必先解除安裝。瀏覽器下載資料夾中的舊安裝程式不屬於應用程式安裝內容，工具不會擅自刪除，使用者確認新版可用後可自行刪除。
+啟動後的自動檢查同一天至多一次；啟動器上的「檢查更新」按鈕不受此限制，可隨時重新檢查。只有 feed 版本高於已安裝版本才顯示提示；目前公開 feed 為 `0.2.1`，因此 0.1.0 與 0.2.0 會顯示更新，0.2.1 不會重複提示。固定 `AppId` 與安裝位置使新版直接更新既有安裝，不會建立第二份程式；使用者不必先解除安裝。瀏覽器下載資料夾中的舊安裝程式不屬於應用程式安裝內容，工具不會擅自刪除，使用者確認新版可用後可自行刪除。
 
 版本資訊至少包含：
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "release_url": "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
   "release_notes": [
-    "新增多 PDF 逐頁轉 PNG 或 JPEG",
-    "支援每份 PDF 子資料夾或 ZIP 根目錄兩種輸出結構"
+    "修正可直接開啟的空密碼權限保護 PDF 被誤判為需要密碼",
+    "空密碼解鎖成功時可正常預覽、合併及轉換為圖片"
   ]
 }
 ```
@@ -122,18 +122,8 @@ flowchart LR
 - 公開 repository：`Yufe1210/local-pdf-toolbox`。
 - `main`：原始碼、`uv.lock`、文件、測試與建置腳本。
 - `updates/update.json`：啟動器讀取的版本資訊；發布新版安裝程式後才更新。
-- Git tags：`v0.1.0`、`v0.2.0` 等對應原始碼版本。
+- Git tags：`v0.1.0`、`v0.2.0`、`v0.2.1` 等對應原始碼版本。
 - GitHub Releases：保存每個版本的完整安裝程式與 SHA-256，不將二進位檔提交到 Git 歷史。本機建置與公開資產都採 `LocalPDFToolbox-Setup-v版本.exe` 命名，避免覆蓋舊版本，也避免 GitHub 清理全中文資產名稱。
-
-## 目前未發布候選
-
-### 0.2.1
-
-- 本機候選建置日期：2026-07-21。
-- 安裝程式：`release/LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes。
-- SHA-256：`ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`。
-- 狀態：未簽章；完整 `-ReleaseBuild`、76 項測試、封裝後 `--self-test`、loopback smoke test、外部 Windows 安裝、GUI 及 0.2.0 → 0.2.1 覆蓋升級驗收均通過，可準備發布。
-- 公開 `updates/update.json` 仍維持 0.2.0；候選通過驗收並建立 GitHub Release 前不得切換。
 
 ## 已發布版本
 
@@ -157,6 +147,17 @@ flowchart LR
 - 狀態：一般 GitHub Release、`latest`、非 draft、非 Pre-release；標題與說明明確標示未簽章公開測試版。
 - 發布前驗收：使用者回報 0.2.0 `verify-release.ps1` 與 0.1.0 → 0.2.0 `verify-upgrade.ps1` 均通過。
 - GitHub 資產驗證：兩個資產狀態均為 `uploaded`；GitHub 記錄的安裝程式大小與 SHA-256 digest 和本機候選檔一致。
+
+### 0.2.1
+
+- 發布日期：2026-07-24。
+- tag：`v0.2.1`，指向 commit `9b2f8cf9678cefa97ac0a3bfb132f706553cb939`。
+- Release：<https://github.com/Yufe1210/local-pdf-toolbox/releases/tag/v0.2.1>。
+- 安裝程式：`LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes。
+- SHA-256：`ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`。
+- 狀態：一般 GitHub Release、`latest`、非 draft、非 Pre-release；標題與說明明確標示未簽章公開測試版。
+- 發布前驗收：76 項測試、完整 `-ReleaseBuild`、封裝後 `--self-test`、loopback smoke test、外部 Windows GUI 與 0.2.0 → 0.2.1 覆蓋升級均通過。
+- GitHub 資產驗證：兩個資產狀態均為 `uploaded`；公開重新下載的安裝程式大小、產品版本、SHA-256 清單與雜湊均正確，GitHub digest 亦與本機候選檔一致。
 
 ## 發布檢查清單
 

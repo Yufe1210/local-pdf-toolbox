@@ -1,9 +1,9 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "release_url": "https://github.com/Yufe1210/local-pdf-toolbox/releases/latest",
   "release_notes": [
-    "新增多 PDF 逐頁轉 PNG 或 JPEG",
-    "支援每份 PDF 子資料夾或 ZIP 根目錄兩種輸出結構",
-    "支援 150、200、300 DPI 與 JPEG 品質設定"
+    "修正可直接開啟的空密碼權限保護 PDF 被誤判為需要密碼",
+    "空密碼解鎖成功時可正常預覽、合併及轉換為圖片",
+    "真正需要輸入非空密碼的 PDF 仍不支援"
   ]
 }

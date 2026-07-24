@@ -122,7 +122,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 封裝：完整執行 `.\scripts\build.ps1 -ReleaseBuild`，未略過任何步驟；76 項測試、18 個自家模組、PDFium DLL、第三方授權、含空密碼權限保護 PDF 的安裝版 `--self-test`、loopback smoke test 及 Inno Setup 全部通過。
 - 候選安裝程式：`LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes，產品版本 0.2.1，SHA-256 `ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`，簽章狀態 `NotSigned`。
 - 外部驗收：2026-07-24 使用者回報 0.2.1 候選驗收通過，涵蓋外部 Windows 安裝、GUI 操作及 0.2.0 → 0.2.1 覆蓋升級。
-- 候選狀態：本機開發、實際文件、視覺、封裝及外部 Windows 驗收均已完成，可準備發布。
+- 候選狀態：本機開發、實際文件、視覺、封裝及外部 Windows 驗收均已完成。
+- 發布：`v0.2.1` tag 指向 `9b2f8cf9678cefa97ac0a3bfb132f706553cb939`，一般 GitHub Release 已建立並成為 `latest`；非 draft、非 Pre-release。
+- 公開資產：`LocalPDFToolbox-Setup-v0.2.1.exe` 與 `.sha256` 均為 `uploaded`。安裝程式由公開 Release 重新下載後為 65,757,490 bytes、產品版本 0.2.1，SHA-256 與清單及 GitHub digest 均為 `ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`。
+- 更新資訊：公開 `updates/update.json` 已切換至 0.2.1，並指向 GitHub Releases 的 `latest` 頁面。
+- 發布資訊更新後重新執行 `uv run python -m pytest`，76 項全數通過。
 
 ## 已接受風險與後續驗證
 

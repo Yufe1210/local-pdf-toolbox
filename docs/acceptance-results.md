@@ -1,6 +1,6 @@
 # 發布與驗收紀錄
 
-> 更新日期：2026-07-21
+> 更新日期：2026-07-24
 >
 > 本文件記錄實際執行結果；產品需求仍以 `requirements.md` 為準。
 
@@ -121,7 +121,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 - 自動化：新增「空 user password、非空 owner password、僅允許列印」測試資料，覆蓋頁數驗證、合併與 PDF 轉圖片；既有真正需要密碼的拒絕測試保留。`uv run python -m pytest` 共 76 項全數通過。
 - 封裝：完整執行 `.\scripts\build.ps1 -ReleaseBuild`，未略過任何步驟；76 項測試、18 個自家模組、PDFium DLL、第三方授權、含空密碼權限保護 PDF 的安裝版 `--self-test`、loopback smoke test 及 Inno Setup 全部通過。
 - 候選安裝程式：`LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes，產品版本 0.2.1，SHA-256 `ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`，簽章狀態 `NotSigned`。
-- 候選狀態：本機開發、實際文件、視覺與封裝驗證已完成；外部 Windows 的 0.2.0 → 0.2.1 覆蓋升級及 GUI 驗收尚待完成。
+- 外部驗收：2026-07-24 使用者回報 0.2.1 候選驗收通過，涵蓋外部 Windows 安裝、GUI 操作及 0.2.0 → 0.2.1 覆蓋升級。
+- 候選狀態：本機開發、實際文件、視覺、封裝及外部 Windows 驗收均已完成，可準備發布。
 
 ## 已接受風險與後續驗證
 
@@ -136,7 +137,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\build.ps1 -Relea
 | Windows 10／11 x64 相容性 | 部分確認 | 外部 Windows 驗收通過；本次回報未記錄確切 Windows 版本，未宣稱 Windows 10 與 11 已各自驗收 |
 | 0.2.0 無 Python 電腦離線安裝與 GUI | 通過 | 使用者回報 `verify-release.ps1` 完整驗收通過 |
 | 0.1.0 更新至 0.2.0 | 通過 | 使用者回報 `verify-upgrade.ps1` 原地覆蓋升級及清理通過；公開 Release 與下載資產已建立 |
-| 0.2.1 空密碼 PDF 修正 | 本機候選通過 | 核心、實際文件、視覺、76 項測試與完整建置已通過；尚待 0.2.0 → 0.2.1 外部 Windows 驗收 |
+| 0.2.1 空密碼 PDF 修正 | 驗收通過 | 核心、實際文件、視覺、76 項測試、完整建置、外部 Windows 安裝及 0.2.0 → 0.2.1 覆蓋升級均通過 |
 
 ## 目前主機限制
 

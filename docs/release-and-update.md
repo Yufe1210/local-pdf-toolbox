@@ -132,7 +132,7 @@ flowchart LR
 - 本機候選建置日期：2026-07-21。
 - 安裝程式：`release/LocalPDFToolbox-Setup-v0.2.1.exe`，65,757,490 bytes。
 - SHA-256：`ba315d8e53064ca0ee58dcf62bf07f948f002f13d92947087a6e0c9ea2aef4ba`。
-- 狀態：未簽章；完整 `-ReleaseBuild`、76 項測試、封裝後 `--self-test` 與 loopback smoke test 均通過，尚待外部 Windows 的 0.2.0 → 0.2.1 覆蓋升級及 GUI 驗收。
+- 狀態：未簽章；完整 `-ReleaseBuild`、76 項測試、封裝後 `--self-test`、loopback smoke test、外部 Windows 安裝、GUI 及 0.2.0 → 0.2.1 覆蓋升級驗收均通過，可準備發布。
 - 公開 `updates/update.json` 仍維持 0.2.0；候選通過驗收並建立 GitHub Release 前不得切換。
 
 ## 已發布版本
